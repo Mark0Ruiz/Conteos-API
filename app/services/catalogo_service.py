@@ -101,3 +101,29 @@ class CatalogoService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Error al crear el producto: {str(e)}"
             )
+    
+    @staticmethod
+    def eliminar_producto(db: Session, codigo_barras: str) -> dict:
+        """Eliminar un producto del catálogo"""
+        
+        # Verificar que el producto existe
+        producto = db.query(Catalogo).filter(
+            Catalogo.CodigoBarras == codigo_barras
+        ).first()
+        
+        if not producto:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"No se encontró el producto con código de barras {codigo_barras}"
+            )
+        
+        try:
+            db.delete(producto)
+            db.commit()
+            return {"message": "Producto eliminado exitosamente"}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al eliminar el producto: {str(e)}"
+            )

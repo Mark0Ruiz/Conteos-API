@@ -35,3 +35,15 @@ async def crear_producto(
     Solo usuarios autenticados pueden crear productos.
     """
     return CatalogoService.crear_producto(db, producto_data)
+
+@router.delete("/{codigo_barras}")
+async def eliminar_producto(
+    codigo_barras: str,
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(get_current_user)
+):
+    """
+    Eliminar un producto del catálogo por código de barras.
+    Solo usuarios autenticados pueden eliminar productos.
+    """
+    return CatalogoService.eliminar_producto(db, codigo_barras)
