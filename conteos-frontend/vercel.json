@@ -1,13 +1,7 @@
-# Vercel Configuration
-# Documentación: https://vercel.com/docs/projects/project-configuration
-
 {
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
-  }
+  "framework": "nextjs"
 }
