@@ -35,6 +35,7 @@ export default function AsignarConteo() {
   }>>([])
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [error, setError] = useState('')
   const [showScanner, setShowScanner] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
@@ -48,15 +49,31 @@ export default function AsignarConteo() {
   const loadData = async () => {
     try {
       setLoadingData(true)
-      const usuariosResponse = await conteosAPI.getUsuarios()
-  setUsuarios(usuariosResponse)
-  const sucursalesResponse = await conteosAPI.getSucursales()
-  setSucursales(sucursalesResponse)
+      const sucursalesResponse = await conteosAPI.getSucursales()
+      setSucursales(sucursalesResponse.filter((s: { IdCentro: string; Sucursales: string }) => s.IdCentro.toUpperCase().startsWith('T')))
     } catch (error: any) {
       setError('Error al cargar los datos')
       console.error(error)
     } finally {
       setLoadingData(false)
+    }
+  }
+
+  const loadUsersBySucursal = async (centroId: string) => {
+    try {
+      setLoadingUsers(true)
+      setUsuarios([])
+      const response = await conteosAPI.getUsersBySucursal(centroId)
+      setUsuarios(
+        (response as User[])
+          .filter((u: User) => [2, 4, 5].includes(u.NivelUsuario))
+          .sort((a: User, b: User) => (a.NombreUsuario ?? '').localeCompare(b.NombreUsuario ?? '', 'es', { sensitivity: 'base' }))
+      )
+    } catch (err) {
+      console.error('Error al cargar usuarios de la sucursal:', err)
+      setUsuarios([])
+    } finally {
+      setLoadingUsers(false)
     }
   }
 
@@ -92,13 +109,13 @@ export default function AsignarConteo() {
 
     try {
       // Obtener el nombre del producto desde el código de barras
-      let nombreProducto = 'Desconocido'
+      let nombreProducto: string
       try {
         const producto = await catalogoAPI.getProducto(productoActual.CodigoBarras)
         nombreProducto = producto.Producto
       } catch (err) {
-        // Si no se encuentra el producto, usar "Desconocido"
-        console.warn('Producto no encontrado en catálogo:', productoActual.CodigoBarras)
+        setFieldErrors({ CodigoBarras: `Código de barras "${productoActual.CodigoBarras}" no existe en el catálogo` })
+        return
       }
 
       // Agregar producto con ID único
@@ -253,7 +270,7 @@ export default function AsignarConteo() {
             <FiArrowLeft className="w-4 h-4 mr-2" />
             Volver
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">Asignar Conteo</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Asignar Conteo</h1>
           <p className="mt-2 text-gray-600">
             Crea y asigna un nuevo conteo a un usuario
           </p>
@@ -292,8 +309,11 @@ export default function AsignarConteo() {
                 }`}
                 value={formData.IdCentro}
                 onChange={e => {
-                  setFormData({ ...formData, IdCentro: e.target.value })
-                  setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                  const newCentro = e.target.value
+                  setFormData({ ...formData, IdCentro: newCentro, IdUser: '' })
+                  setFieldErrors({ ...fieldErrors, IdCentro: '', IdUser: '' })
+                  if (newCentro) loadUsersBySucursal(newCentro)
+                  else setUsuarios([])
                 }}
               >
                 <option value="">Seleccionar sucursal...</option>
@@ -463,7 +483,37 @@ export default function AsignarConteo() {
                       Productos agregados ({productosAgregados.length})
                     </h3>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="md:hidden p-4 space-y-3">
+                    {productosAgregados.map((producto) => (
+                      <div key={producto.id} className="border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <p className="text-sm font-semibold text-gray-900">{producto.Producto || 'Desconocido'}</p>
+                        <div className="mt-2 space-y-1 text-sm text-gray-700">
+                          <p><span className="text-gray-500">Código:</span> {producto.CodigoBarras}</p>
+                          <p><span className="text-gray-500">Cantidad:</span> {producto.NSistema.toFixed(2)}</p>
+                          <p><span className="text-gray-500">Precio:</span> ${producto.Precio.toFixed(2)}</p>
+                        </div>
+
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => editarProducto(producto.id)}
+                            className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100"
+                          >
+                            <FiSave className="w-4 h-4 mr-1.5" /> Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => eliminarProducto(producto.id)}
+                            className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                          >
+                            <FiTrash2 className="w-4 h-4 mr-1.5" /> Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
                       <thead className="bg-gray-100 text-xs uppercase text-gray-600">
                         <tr>
@@ -567,7 +617,7 @@ export default function AsignarConteo() {
                   </label>
                   <select
                     required
-                    disabled={!formData.IdCentro || productosAgregados.length === 0}
+                    disabled={!formData.IdCentro || productosAgregados.length === 0 || loadingUsers}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
                       fieldErrors.IdUser ? 'border-red-300 bg-red-50' : 'border-gray-300'
                     }`}
@@ -577,7 +627,13 @@ export default function AsignarConteo() {
                       setFieldErrors({ ...fieldErrors, IdUser: '' })
                     }}
                   >
-                    <option value="">Seleccionar usuario...</option>
+                    <option value="">
+                      {loadingUsers
+                        ? 'Cargando usuarios...'
+                        : formData.IdCentro && usuarios.length === 0
+                          ? 'Sin usuarios asignados a esta sucursal'
+                          : 'Seleccionar usuario...'}
+                    </option>
                     {usuarios.map((usuario) => (
                       <option key={usuario.IdUsuarios} value={usuario.IdUsuarios}>
                         {usuario.NombreUsuario} (Nivel: {usuario.NivelUsuario})
@@ -625,7 +681,7 @@ export default function AsignarConteo() {
 
           {/* Toast Notification */}
           {showToast && (
-            <div className="fixed top-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in-right flex items-center gap-3 max-w-md">
+            <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in-right flex items-center gap-3 sm:max-w-md">
               <FiCheckCircle className="w-6 h-6 flex-shrink-0" />
               <div>
                 <p className="font-semibold">¡Conteo asignado exitosamente!</p>

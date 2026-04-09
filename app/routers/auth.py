@@ -7,7 +7,7 @@ from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import authenticate_user, create_access_token, get_user_role, get_current_user
 from app.schemas.schemas import Token, UsuarioLogin, UsuarioResponse
-from app.models.models import Usuarios
+from app.models.models import Usuarios, UsuarioSucursal
 
 router = APIRouter()
 
@@ -74,6 +74,33 @@ async def get_usuarios(
 ):
     """Obtener lista de usuarios activos para asignación"""
     usuarios = db.query(Usuarios).filter(Usuarios.Estatus == 1).all()
+    return [UsuarioResponse(
+        IdUsuarios=usuario.IdUsuarios,
+        NombreUsuario=usuario.NombreUsuario,
+        NivelUsuario=usuario.NivelUsuario,
+        Estatus=usuario.Estatus
+    ) for usuario in usuarios]
+
+@router.get("/usuarios/sucursal/{centro_id}", response_model=List[UsuarioResponse])
+async def get_usuarios_por_sucursal(
+    centro_id: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    """Obtener usuarios activos asignados a una sucursal específica"""
+    asignaciones = (
+        db.query(UsuarioSucursal)
+        .filter(UsuarioSucursal.IdCentro == centro_id)
+        .all()
+    )
+    ids_usuarios = [a.IdUsuario for a in asignaciones]
+    if not ids_usuarios:
+        return []
+    usuarios = (
+        db.query(Usuarios)
+        .filter(Usuarios.IdUsuarios.in_(ids_usuarios), Usuarios.Estatus == 1)
+        .all()
+    )
     return [UsuarioResponse(
         IdUsuarios=usuario.IdUsuarios,
         NombreUsuario=usuario.NombreUsuario,

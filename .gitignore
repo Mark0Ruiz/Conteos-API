@@ -126,6 +126,19 @@ dmypy.json
 *.swo
 *~
 
+# SQL dumps y respaldos de base de datos
+*.sql
+Dump*.sql
+respaldo_*.sql
+
+# Logs y archivos temporales de scripts locales
+fullstack.out.log
+fullstack.err.log
+.fullstack.pid
+
+# Certificados mkcert locales
+certificates/
+
 # OS generated files
 .DS_Store
 .DS_Store?
