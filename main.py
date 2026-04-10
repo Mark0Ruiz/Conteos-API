@@ -4,8 +4,11 @@ from app.routers import conteos, auth, catalogo
 from app.core.database import engine
 from app.models import models
 
-# Crear las tablas si no existen
-models.Base.metadata.create_all(bind=engine)
+# Crear las tablas si no existen (no bloquear el arranque si la DB no está disponible)
+try:
+    models.Base.metadata.create_all(bind=engine)
+except Exception as e:
+    print(f"[WARNING] No se pudieron crear las tablas: {e}")
 
 app = FastAPI(
     title="API Conteos SCISP",
@@ -31,6 +34,23 @@ app.include_router(catalogo.router)
 @app.get("/")
 async def root():
     return {"message": "API Conteos SCISP - Sistema de conteos de productos"}
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
+@app.get("/health/db")
+async def health_db():
+    from app.core.database import SessionLocal
+    try:
+        db = SessionLocal()
+        db.execute(__import__('sqlalchemy').text("SELECT 1"))
+        db.close()
+        return {"status": "ok", "db": "connected"}
+    except Exception as e:
+        return {"status": "error", "db": str(e)}
 
 if __name__ == "__main__":
     import uvicorn

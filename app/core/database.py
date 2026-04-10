@@ -7,15 +7,14 @@ import os
 # Configuración de argumentos extra para la conexión
 connect_args = {}
 
-# Si la base es MySQL (mysql+pymysql://...), activamos SSL
+# Si la base es MySQL (mysql+pymysql://...), activamos SSL y timeout
 if settings.DATABASE_URL.startswith("mysql"):
+    connect_args["connect_timeout"] = 10
     azure_ca_bundle = "/etc/ssl/certs/ca-certificates.crt"
     if os.path.exists(azure_ca_bundle):
-        connect_args = {
-            "ssl": {
-                # Bundle de certificados del contenedor (Azure App Service Linux)
-                "ca": azure_ca_bundle
-            }
+        connect_args["ssl"] = {
+            # Bundle de certificados del contenedor (Azure App Service Linux)
+            "ca": azure_ca_bundle
         }
 
 # Crear el motor de la base de datos
