@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Configuración de base de datos
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "mysql+pymysql://root:1234@localhost:3306/siniestros_scisp"
+        "mysql+pymysql://root:1234@localhost:3306/conteos_scisp"
     )
     
     # Configuración de autenticación
