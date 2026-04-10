@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # Configuración de base de datos
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "mysql+pymysql://conteos:Pa55w0rd@conteos.mysql.database.azure.com:3306/conteos_scisp"
+        "mysql+pymysql://conteos:Pa55w0rd@mysql-conteos.mysql.database.azure.com:3306/conteos_scisp"
     )
     
     # Configuración de autenticación

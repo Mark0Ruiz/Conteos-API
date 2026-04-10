@@ -16,6 +16,9 @@ if settings.DATABASE_URL.startswith("mysql"):
             # Bundle de certificados del contenedor (Azure App Service Linux)
             "ca": azure_ca_bundle
         }
+    else:
+        # Fuera de Linux (dev en Windows), habilitar SSL sin verificar certificado
+        connect_args["ssl"] = {"fake_flag_to_enable_tls": True}
 
 # Crear el motor de la base de datos
 engine = create_engine(
