@@ -1,0 +1,6 @@
+{
+  "installCommand": "cd conteos-frontend && npm install",
+  "buildCommand": "cd conteos-frontend && npm run build",
+  "outputDirectory": "conteos-frontend/.next",
+  "framework": "nextjs"
+}
