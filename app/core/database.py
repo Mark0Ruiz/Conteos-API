@@ -10,14 +10,18 @@ connect_args = {}
 # Si la base es MySQL (mysql+pymysql://...), activamos SSL y timeout
 if settings.DATABASE_URL.startswith("mysql"):
     connect_args["connect_timeout"] = 10
-    azure_ca_bundle = "/etc/ssl/certs/ca-certificates.crt"
-    if os.path.exists(azure_ca_bundle):
-        connect_args["ssl"] = {
-            # Bundle de certificados del contenedor (Azure App Service Linux)
-            "ca": azure_ca_bundle
-        }
+    # Aiven expone TLS con una cadena de certificados que falla en Railway si se valida
+    # contra el bundle del contenedor. Permitimos TLS sin verificación estricta para
+    # que el despliegue funcione en Railway; si quieres endurecerlo, usa un CA bundle
+    # específico de tu proveedor y cambia esta variable de entorno.
+    verify_db_ssl = os.getenv("DB_SSL_VERIFY", "false").lower() in ("1", "true", "yes")
+    if verify_db_ssl:
+        azure_ca_bundle = "/etc/ssl/certs/ca-certificates.crt"
+        if os.path.exists(azure_ca_bundle):
+            connect_args["ssl"] = {
+                "ca": azure_ca_bundle
+            }
     else:
-        # Fuera de Linux (dev en Windows), habilitar SSL sin verificar certificado
         connect_args["ssl"] = {"fake_flag_to_enable_tls": True}
 
 # Crear el motor de la base de datos
