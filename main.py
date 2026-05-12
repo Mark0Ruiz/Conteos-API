@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import conteos, auth, catalogo
+from app.core.config import settings
 from app.core.database import engine
 from app.models import models
 
