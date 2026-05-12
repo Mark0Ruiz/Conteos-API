@@ -4,9 +4,10 @@ import os
 
 class Settings(BaseSettings):
     # Configuración de base de datos
+    # En producción, establecer DATABASE_URL como variable de entorno en Railway
     DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "mysql+pymysql://conteos:Pa55w0rd@mysql-conteos.mysql.database.azure.com:3306/conteos_scisp"
+        "mysql+pymysql://user:password@localhost:3306/siniestros_scisp"
     )
     
     # Configuración de autenticación
@@ -16,6 +17,9 @@ class Settings(BaseSettings):
     )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+
+    # CORS: lista de orígenes separados por coma. Usar "*" para permitir todo (solo dev).
+    ALLOWED_ORIGINS: str = os.getenv("ALLOWED_ORIGINS", "*")
     
     # Configuración de la aplicación
     PROJECT_NAME: str = "API Conteos SCISP"

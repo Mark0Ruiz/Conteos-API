@@ -128,6 +128,10 @@ dmypy.json
 
 # SQL dumps y respaldos de base de datos
 *.sql
+
+# Dependencias y artefactos raíz (no pertenecen al proyecto Python)
+node_modules/
+package-lock.json
 Dump*.sql
 respaldo_*.sql
 
