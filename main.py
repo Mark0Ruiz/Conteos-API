@@ -1,9 +1,12 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import conteos, auth, catalogo
 from app.core.config import settings
 from app.core.database import engine
 from app.models import models
+
+logging.basicConfig(level=settings.LOG_LEVEL.upper())
 
 # Crear las tablas si no existen (no bloquear el arranque si la DB no está disponible)
 try:
