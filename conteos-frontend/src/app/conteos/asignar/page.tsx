@@ -636,7 +636,7 @@ export default function AsignarConteo() {
                     </option>
                     {usuarios.map((usuario) => (
                       <option key={usuario.IdUsuarios} value={usuario.IdUsuarios}>
-                        {usuario.NombreUsuario} (Nivel: {usuario.NivelUsuario})
+                        {usuario.NombreUsuario}
                       </option>
                     ))}
                   </select>
