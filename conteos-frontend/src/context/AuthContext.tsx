@@ -23,7 +23,9 @@ const getRoleByLevel = (nivel: number): string => {
     case 2: return 'supervisor'
     case 3: return 'cca'
     case 4: return 'app'
-    default: return 'unknown'
+    case 7: return 'admin_cctv'
+    case 8: return 'supervision_cctv'
+    default: return 'administrador'
   }
 }
 

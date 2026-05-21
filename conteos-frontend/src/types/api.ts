@@ -70,7 +70,7 @@ export interface ConteoContestar {
   }[];
 }
 
-export type UserRole = 'administrador' | 'supervisor' | 'cca' | 'app';
+export type UserRole = 'administrador' | 'supervisor' | 'cca' | 'app' | 'admin_cctv' | 'supervision_cctv';
 
 export interface Usuario {
   IdUser: string;
