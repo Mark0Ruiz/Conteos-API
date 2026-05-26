@@ -39,15 +39,13 @@ export default function ContestarConteos() {
 
       setSucursalesMap(sucursalesLookup)
       
-      console.log('Todos los conteos:', conteos)
-      console.log('Usuario actual:', user)
-      
-      // Filtrar conteos pendientes asignados al usuario actual (Envio = 0)
-      const asignados = conteos.filter((conteo: ConteoResponse) => 
-        conteo.Envio === 0 && conteo.IdUsuario === user?.IdUsuarios
+      // Filtrar conteos pendientes de las sucursales que puede ver el usuario
+      // Para nivel 4: getSucursales() ya devuelve solo sus sucursales asignadas
+      // Para otros niveles: devuelve todas
+      const sucursalesIds = Object.keys(sucursalesLookup)
+      const asignados = conteos.filter((conteo: ConteoResponse) =>
+        conteo.Envio === 0 && sucursalesIds.includes(conteo.IdCentro)
       )
-      
-      console.log('Conteos asignados filtrados:', asignados)
       
       setConteosAsignados(asignados)
     } catch (error: any) {
