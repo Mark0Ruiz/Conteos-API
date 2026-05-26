@@ -102,7 +102,7 @@ export default function AsignarConteo() {
     // Validar campos
     const errors: { [key: string]: string } = {}
     if (!productoActual.CodigoBarras) errors.CodigoBarras = 'El código de barras es requerido'
-    if (productoActual.NSistema <= 0) errors.NSistema = 'La cantidad debe ser mayor a 0'
+    if (productoActual.NSistema < 0) errors.NSistema = 'La cantidad no puede ser negativa'
     if (productoActual.Precio <= 0) errors.Precio = 'El precio debe ser mayor a 0'
 
     if (Object.keys(errors).length > 0) {
@@ -418,7 +418,7 @@ export default function AsignarConteo() {
                           fieldErrors.NSistema ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
                         placeholder="0"
-                        value={productoActual.NSistema || ''}
+                          value={productoActual.NSistema === 0 ? '' : productoActual.NSistema}
                         onChange={(e) => {
                           setProductoActual({ ...productoActual, NSistema: parseFloat(e.target.value) || 0 })
                           setFieldErrors({ ...fieldErrors, NSistema: '' })
