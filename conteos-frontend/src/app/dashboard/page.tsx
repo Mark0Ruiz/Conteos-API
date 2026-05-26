@@ -2,14 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox } from 'react-icons/fi'
+import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI } from '@/lib/api'
 import { formatShortDate } from '@/lib/dateUtils'
 import { ConteoResponse, User } from '@/types/api'
 
 export default function Dashboard() {
-  const { user, logout } = useAuth()
+  const { user, logout, selectedSucursal } = useAuth()
   const router = useRouter()
   
   const [stats, setStats] = useState({
@@ -164,6 +164,15 @@ export default function Dashboard() {
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                     {userRole}
                   </span>
+                  {selectedSucursal && (
+                    <button
+                      onClick={() => router.push('/sucursal')}
+                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+                    >
+                      <FiMapPin className="w-3 h-3" />
+                      {selectedSucursal.Sucursales}
+                    </button>
+                  )}
                 </p>
               </div>
             </div>

@@ -16,17 +16,15 @@ interface ProductoAgregado extends ConteoDetalle {
 }
 
 export default function CrearConteo() {
-  const { user } = useAuth()
+  const { user, selectedSucursal } = useAuth()
   const router = useRouter()
   
   const [formData, setFormData] = useState({
-    IdCentro: '',
+    IdCentro: selectedSucursal?.IdCentro || '',
   })
   const [productosAgregados, setProductosAgregados] = useState<ProductoAgregado[]>([])
   const [productoActual, setProductoActual] = useState({ CodigoBarras: '', NSistema: 0, NExcistencia: 0, Precio: 0 })
-  const [sucursales, setSucursales] = useState<{ IdCentro: string; Sucursales: string }[]>([])
   const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
   const [loadingPrecio, setLoadingPrecio] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
@@ -35,21 +33,12 @@ export default function CrearConteo() {
   const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
-    loadSucursales()
-  }, [])
-
-  const loadSucursales = async () => {
-    try {
-      setLoadingData(true)
-      const sucursalesResponse = await conteosAPI.getSucursales()
-      setSucursales(sucursalesResponse.filter((s: { IdCentro: string; Sucursales: string }) => s.IdCentro.toUpperCase().startsWith('T')))
-    } catch (error: any) {
-      setError('Error al cargar las sucursales')
-      console.error(error)
-    } finally {
-      setLoadingData(false)
+    if (!selectedSucursal) {
+      router.push('/seleccionar-sucursal')
+      return
     }
-  }
+    setFormData({ IdCentro: selectedSucursal.IdCentro })
+  }, [selectedSucursal])
 
   const agregarProducto = async () => {
     const errors: { [key: string]: string } = {}
@@ -116,10 +105,6 @@ export default function CrearConteo() {
   }
 
   const openScanner = () => {
-    if (!formData.IdCentro) {
-      setFieldErrors({ ...fieldErrors, IdCentro: 'Selecciona una sucursal primero' })
-      return
-    }
     setShowScanner(true)
   }
 
@@ -204,7 +189,7 @@ export default function CrearConteo() {
     }
   }
 
-  if (loadingData) {
+  if (!selectedSucursal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -258,32 +243,19 @@ export default function CrearConteo() {
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <FiShoppingBag className="w-4 h-4 text-gray-500" />
-                    Sucursal <span className="text-red-500">*</span>
+                    Sucursal
                   </label>
-                  <select
-                    required
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                      fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                    value={formData.IdCentro}
-                    onChange={(e) => {
-                      setFormData({ IdCentro: e.target.value })
-                      setFieldErrors({ ...fieldErrors, IdCentro: '' })
-                    }}
-                  >
-                    <option value="">Selecciona una sucursal</option>
-                    {sucursales.map(suc => (
-                      <option key={suc.IdCentro} value={suc.IdCentro}>
-                        {suc.Sucursales} ({suc.IdCentro})
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.IdCentro && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <FiAlertCircle className="w-3 h-3" />
-                      {fieldErrors.IdCentro}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <span className="font-semibold text-blue-800">{selectedSucursal.Sucursales}</span>
+                    <span className="text-sm text-blue-500">({selectedSucursal.IdCentro})</span>
+                    <button
+                      type="button"
+                      onClick={() => router.push('/seleccionar-sucursal')}
+                      className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Cambiar
+                    </button>
+                  </div>
                 </div>
                 
                 <div>
@@ -300,9 +272,7 @@ export default function CrearConteo() {
           </div>
 
           {/* Paso 2: Productos a Contar */}
-          <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-opacity ${
-            !formData.IdCentro ? 'opacity-50 pointer-events-none' : ''
-          }`}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b border-green-200">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
@@ -310,9 +280,7 @@ export default function CrearConteo() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Productos a Contar</h2>
-                  <p className="text-sm text-gray-600">
-                    {formData.IdCentro ? 'Escanea o agrega productos manualmente' : 'Selecciona una sucursal para comenzar el conteo'}
-                  </p>
+                  <p className="text-sm text-gray-600">Escanea o agrega productos manualmente</p>
                 </div>
               </div>
             </div>
@@ -331,7 +299,7 @@ export default function CrearConteo() {
                         <input
                           type="text"
                           inputMode="numeric"
-                          disabled={!formData.IdCentro}
+
                           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                             fieldErrors.CodigoBarras ? 'border-red-300 bg-red-50' : 'border-gray-300'
                           }`}
@@ -385,7 +353,6 @@ export default function CrearConteo() {
                         inputMode="decimal"
                         step="0.01"
                         min="0"
-                        disabled={!formData.IdCentro}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           fieldErrors.NSistema ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
@@ -414,7 +381,6 @@ export default function CrearConteo() {
                         inputMode="decimal"
                         step="0.01"
                         min="0"
-                        disabled={!formData.IdCentro}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           fieldErrors.NExcistencia ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
@@ -446,7 +412,7 @@ export default function CrearConteo() {
                         inputMode="decimal"
                         step="0.01"
                         min="0"
-                        disabled={!formData.IdCentro || loadingPrecio}
+                        disabled={loadingPrecio}
                         className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           fieldErrors.Precio ? 'border-red-300 bg-red-50' : precioAutoFill ? 'border-green-400 bg-green-50' : 'border-gray-300'
                         }`}

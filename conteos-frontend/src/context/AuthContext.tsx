@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthResponse, UserRole } from '@/types/api';
+import { User, AuthResponse, UserRole, Sucursal } from '@/types/api';
 import { authAPI } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
@@ -10,8 +10,11 @@ interface AuthContextType {
   role: UserRole | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  selectedSucursal: Sucursal | null;
   login: (credentials: { IdUsuarios: number; Contraseña: string }) => Promise<void>;
   logout: () => void;
+  selectSucursal: (sucursal: Sucursal) => void;
+  clearSucursal: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,6 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedSucursal, setSelectedSucursal] = useState<Sucursal | null>(null);
 
   const isAuthenticated = !!user;
 
@@ -42,17 +46,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
+      const savedSucursal = localStorage.getItem('selectedSucursal');
 
       if (token && savedUser) {
         try {
           const userData = JSON.parse(savedUser);
           setUser(userData);
-          // Calcular rol basado en NivelUsuario
           const userRole = getRoleByLevel(userData.NivelUsuario);
           setRole(userRole as UserRole);
+          if (savedSucursal) {
+            setSelectedSucursal(JSON.parse(savedSucursal));
+          }
         } catch (error) {
           localStorage.removeItem('token');
           localStorage.removeItem('user');
+          localStorage.removeItem('selectedSucursal');
         }
       }
       setIsLoading(false);
@@ -85,9 +93,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('selectedSucursal');
     setUser(null);
     setRole(null);
+    setSelectedSucursal(null);
     router.push('/login');
+  };
+
+  const selectSucursal = (sucursal: Sucursal) => {
+    setSelectedSucursal(sucursal);
+    localStorage.setItem('selectedSucursal', JSON.stringify(sucursal));
+  };
+
+  const clearSucursal = () => {
+    setSelectedSucursal(null);
+    localStorage.removeItem('selectedSucursal');
   };
 
   return (
@@ -96,8 +116,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role,
       isLoading,
       isAuthenticated,
+      selectedSucursal,
       login,
       logout,
+      selectSucursal,
+      clearSucursal,
     }}>
       {children}
     </AuthContext.Provider>

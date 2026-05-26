@@ -11,13 +11,12 @@ import dynamic from 'next/dynamic'
 const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), { ssr: false })
 
 export default function AsignarConteo() {
-  const { user } = useAuth()
+  const { user, selectedSucursal } = useAuth()
   const router = useRouter()
   
   const [usuarios, setUsuarios] = useState<User[]>([])
-  const [sucursales, setSucursales] = useState<{ IdCentro: string; Sucursales: string }[]>([])
   const [formData, setFormData] = useState({
-    IdCentro: '',
+    IdCentro: selectedSucursal?.IdCentro || '',
     IdUser: '',
     FechaAsignacion: ''
   })
@@ -45,21 +44,13 @@ export default function AsignarConteo() {
   const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      setLoadingData(true)
-      const sucursalesResponse = await conteosAPI.getSucursales()
-      setSucursales(sucursalesResponse.filter((s: { IdCentro: string; Sucursales: string }) => s.IdCentro.toUpperCase().startsWith('T')))
-    } catch (error: any) {
-      setError('Error al cargar los datos')
-      console.error(error)
-    } finally {
-      setLoadingData(false)
+    if (!selectedSucursal) {
+      router.push('/seleccionar-sucursal')
+      return
     }
-  }
+    setFormData(prev => ({ ...prev, IdCentro: selectedSucursal.IdCentro }))
+    loadUsersBySucursal(selectedSucursal.IdCentro)
+  }, [selectedSucursal])
 
   const loadUsersBySucursal = async (centroId: string) => {
     try {
@@ -80,10 +71,6 @@ export default function AsignarConteo() {
   }
 
   const openScanner = () => {
-    if (!formData.IdCentro) {
-      setFieldErrors({ ...fieldErrors, IdCentro: 'Selecciona una sucursal primero' })
-      return
-    }
     setShowScanner(true)
   }
 
@@ -272,7 +259,7 @@ export default function AsignarConteo() {
     )
   }
 
-  if (loadingData) {
+  if (!selectedSucursal || loadingData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -314,47 +301,31 @@ export default function AsignarConteo() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Sucursal</h2>
-                  <p className="text-sm text-gray-600">Selecciona la sucursal donde se realizará el conteo</p>
+                  <p className="text-sm text-gray-600">Sucursal de trabajo seleccionada</p>
                 </div>
               </div>
             </div>
             <div className="p-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <FiShoppingBag className="inline w-4 h-4 mr-1" />
-                Sucursal <span className="text-red-500">*</span>
+                Sucursal
               </label>
-              <select
-                required
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-                  fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                }`}
-                value={formData.IdCentro}
-                onChange={e => {
-                  const newCentro = e.target.value
-                  setFormData({ ...formData, IdCentro: newCentro, IdUser: '' })
-                  setFieldErrors({ ...fieldErrors, IdCentro: '', IdUser: '' })
-                  if (newCentro) loadUsersBySucursal(newCentro)
-                  else setUsuarios([])
-                }}
-              >
-                <option value="">Seleccionar sucursal...</option>
-                {sucursales.map(suc => (
-                  <option key={suc.IdCentro} value={suc.IdCentro}>{suc.Sucursales} ({suc.IdCentro})</option>
-                ))}
-              </select>
-              {fieldErrors.IdCentro && (
-                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                  <FiAlertCircle className="w-3 h-3" />
-                  {fieldErrors.IdCentro}
-                </p>
-              )}
+              <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <span className="font-semibold text-blue-800">{selectedSucursal.Sucursales}</span>
+                <span className="text-sm text-blue-500">({selectedSucursal.IdCentro})</span>
+                <button
+                  type="button"
+                  onClick={() => router.push('/seleccionar-sucursal')}
+                  className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+                >
+                  Cambiar
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Paso 2: Productos a Contar */}
-          <div className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-opacity ${
-            !formData.IdCentro ? 'opacity-50 pointer-events-none' : ''
-          }`}>
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b border-green-200">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
@@ -362,11 +333,7 @@ export default function AsignarConteo() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Productos a Contar</h2>
-                  <p className="text-sm text-gray-600">
-                    {formData.IdCentro 
-                      ? 'Agrega uno o varios productos que deberán ser revisados en este conteo' 
-                      : 'Selecciona una sucursal para agregar productos'}
-                  </p>
+                  <p className="text-sm text-gray-600">Agrega uno o varios productos que deberán ser revisados en este conteo</p>
                 </div>
               </div>
             </div>
@@ -384,8 +351,7 @@ export default function AsignarConteo() {
                       <input
                         type="text"
                         inputMode="numeric"
-                        disabled={!formData.IdCentro}
-                        className={`flex-1 px-4 py-3 border-0 focus:ring-0 ${
+                          className={`flex-1 px-4 py-3 border-0 focus:ring-0 ${
                           fieldErrors.CodigoBarras ? 'bg-red-50' : 'bg-white'
                         }`}
                         placeholder="Escanea o escribe el código de barras"
@@ -400,11 +366,10 @@ export default function AsignarConteo() {
                       <button
                         type="button"
                         onClick={openScanner}
-                        disabled={!formData.IdCentro}
-                        className={`px-4 py-3 flex items-center justify-center transition-colors border-l border-gray-300 ${
+                          className={`px-4 py-3 flex items-center justify-center transition-colors border-l border-gray-300 ${
                           showScanner
                             ? 'bg-gray-600 hover:bg-gray-700 text-white'
-                            : 'bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300 disabled:cursor-not-allowed'
+                            : 'bg-green-600 hover:bg-green-700 text-white'
                         }`}
                         title={showScanner ? "Detener escaneo" : "Escanear código de barras"}
                       >
@@ -436,8 +401,7 @@ export default function AsignarConteo() {
                         inputMode="decimal"
                         step="0.01"
                         min="0"
-                        disabled={!formData.IdCentro}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
                           fieldErrors.NSistema ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
                         placeholder="0"
@@ -466,7 +430,7 @@ export default function AsignarConteo() {
                           inputMode="decimal"
                           step="0.01"
                           min="0"
-                          disabled={!formData.IdCentro || loadingPrecio}
+                          disabled={loadingPrecio}
                           className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
                             fieldErrors.Precio ? 'border-red-300 bg-red-50' : precioAutoFill ? 'border-green-400 bg-green-50' : 'border-gray-300'
                           }`}

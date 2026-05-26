@@ -78,6 +78,13 @@ export interface Usuario {
   Rol: UserRole;
 }
 
+export interface Sucursal {
+  IdCentro: string;
+  Sucursales: string;
+  IdZona: number;
+  Zona: string | null;
+}
+
 export interface ApiError {
   detail: string;
   code?: string;

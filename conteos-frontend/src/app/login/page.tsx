@@ -30,7 +30,7 @@ export default function LoginPage() {
         IdUsuarios: parseInt(credentials.IdUsuarios),
         Contraseña: credentials.Contraseña
       })
-      router.push('/dashboard')
+      router.push('/seleccionar-sucursal')
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión')
     } finally {
