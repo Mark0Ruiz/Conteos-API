@@ -30,7 +30,7 @@ USER_ROLES = {
 NIVELES_SUCURSALES_RESTRINGIDAS = {2, 4}
 
 # Permisos por acción
-NIVELES_CONTESTAR  = {1, 4, 8}   # Admin, APP, Supervisión CCTV
+NIVELES_CONTESTAR  = {1, 3, 4, 8}   # Admin, Monitorista CCTV, APP, Supervisión CCTV
 NIVELES_ASIGNAR    = {1, 2, 3, 7, 8}  # Todos excepto APP
 NIVELES_ELIMINAR   = {1, 8}       # Admin, Supervisión CCTV
 NIVELES_EDITAR     = {1, 2, 3, 7, 8}  # Todos excepto APP

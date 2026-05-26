@@ -271,6 +271,21 @@ class ConteoService:
                 detail="Este conteo ya ha sido contestado"
             )
         
+        # Nivel 4 (APP): solo puede contestar conteos de sus sucursales asignadas
+        usuario = db.query(Usuarios).filter(Usuarios.IdUsuarios == user_id).first()
+        if usuario and usuario.NivelUsuario == 4:
+            from app.models.models import UsuarioSucursal
+            centros_asignados = db.query(UsuarioSucursal.IdCentro).filter(
+                UsuarioSucursal.IdUsuario == user_id,
+                UsuarioSucursal.IdCentro.isnot(None)
+            ).all()
+            centros_ids = [c[0] for c in centros_asignados]
+            if conteo.IdCentro not in centros_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="No tienes permiso para contestar conteos de esta sucursal"
+                )
+        
         # Actualizar existencias físicas
         for detalle_update in conteo_data.detalles:
             if detalle_update.NExcistencia is not None:
