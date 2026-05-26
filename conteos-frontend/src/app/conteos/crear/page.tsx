@@ -27,10 +27,12 @@ export default function CrearConteo() {
   const [sucursales, setSucursales] = useState<{ IdCentro: string; Sucursales: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [loadingPrecio, setLoadingPrecio] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({})
   const [showScanner, setShowScanner] = useState(false)
   const [showToast, setShowToast] = useState(false)
+  const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
     loadSucursales()
@@ -121,10 +123,29 @@ export default function CrearConteo() {
     setShowScanner(true)
   }
 
+  const fetchPrecio = async (barcode: string) => {
+    if (!barcode) return
+    setLoadingPrecio(true)
+    setPrecioAutoFill(false)
+    try {
+      const precio = await catalogoAPI.getUltimoPrecio(barcode)
+      if (precio !== null) {
+        setProductoActual(prev => ({ ...prev, Precio: precio }))
+        setPrecioAutoFill(true)
+        setFieldErrors(prev => ({ ...prev, Precio: '' }))
+      }
+    } catch {
+      // Sin precio previo, el usuario lo captura manualmente
+    } finally {
+      setLoadingPrecio(false)
+    }
+  }
+
   const handleScan = (barcode: string) => {
-    setProductoActual({ ...productoActual, CodigoBarras: barcode })
+    setProductoActual(prev => ({ ...prev, CodigoBarras: barcode }))
     setShowScanner(false)
-    setFieldErrors({ ...fieldErrors, CodigoBarras: '' })
+    setFieldErrors(prev => ({ ...prev, CodigoBarras: '' }))
+    fetchPrecio(barcode)
   }
 
   const closeScanner = () => {
@@ -319,7 +340,9 @@ export default function CrearConteo() {
                           onChange={(e) => {
                             setProductoActual({ ...productoActual, CodigoBarras: e.target.value })
                             setFieldErrors({ ...fieldErrors, CodigoBarras: '' })
+                            setPrecioAutoFill(false)
                           }}
+                          onBlur={(e) => fetchPrecio(e.target.value)}
                         />
                       </div>
                       <button
@@ -417,23 +440,33 @@ export default function CrearConteo() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Precio <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      disabled={!formData.IdCentro}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        fieldErrors.Precio ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                      }`}
-                      placeholder="0.00"
-                      value={productoActual.Precio || ''}
-                      onChange={(e) => {
-                        setProductoActual({ ...productoActual, Precio: parseFloat(e.target.value) || 0 })
-                        setFieldErrors({ ...fieldErrors, Precio: '' })
-                      }}
-                    />
-                    <p className="mt-1 text-xs text-gray-500">Precio unitario del producto</p>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        disabled={!formData.IdCentro || loadingPrecio}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          fieldErrors.Precio ? 'border-red-300 bg-red-50' : precioAutoFill ? 'border-green-400 bg-green-50' : 'border-gray-300'
+                        }`}
+                        placeholder={loadingPrecio ? 'Buscando precio...' : '0.00'}
+                        value={productoActual.Precio || ''}
+                        onChange={(e) => {
+                          setProductoActual({ ...productoActual, Precio: parseFloat(e.target.value) || 0 })
+                          setFieldErrors({ ...fieldErrors, Precio: '' })
+                          setPrecioAutoFill(false)
+                        }}
+                      />
+                      {loadingPrecio && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                      {precioAutoFill ? '✓ Precio obtenido del último conteo registrado' : 'Precio unitario del producto'}
+                    </p>
                     {fieldErrors.Precio && (
                       <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                         <FiAlertCircle className="w-3 h-3" />

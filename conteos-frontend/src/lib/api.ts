@@ -140,6 +140,12 @@ export const catalogoAPI = {
     return response.data
   },
 
+  // Obtener el último precio registrado para un código de barras
+  getUltimoPrecio: async (codigoBarras: string): Promise<number | null> => {
+    const response = await api.get(`/api/v1/catalogo/${codigoBarras}/ultimo-precio`)
+    return response.data.Precio
+  },
+
   // Crear nuevo producto
   createProducto: async (data: {
     CodigoBarras: string
