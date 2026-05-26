@@ -39,7 +39,7 @@ export interface ConteoCreate {
 export interface ConteoAsignar {
   IdCentro: string;
   Fechal?: string;
-  IdUsuario: number;
+  IdUsuario?: number;
   detalles: ConteoDetalle[];
 }
 
@@ -49,7 +49,7 @@ export interface ConteoResponse {
   Envio: number;
   IdRealizo: number;
   IdCentro: string;
-  IdUsuario: number;
+  IdUsuario: number | null;
   detalles: ConteoDetalleResponse[];
 }
 
@@ -59,7 +59,7 @@ export interface ConteoListResponse {
   Envio: number;
   IdRealizo: number;
   IdCentro: string;
-  IdUsuario: number;
+  IdUsuario: number | null;
   total_productos: number;
 }
 

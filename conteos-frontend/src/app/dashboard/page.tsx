@@ -107,7 +107,8 @@ export default function Dashboard() {
     return nombreSucursal ? `${idCentro} - ${nombreSucursal}` : idCentro
   }
 
-  const formatUsuario = (idUsuario: number) => {
+  const formatUsuario = (idUsuario: number | null) => {
+    if (idUsuario === null || idUsuario === undefined) return 'Sin asignar'
     const nombreUsuario = usuariosMap[idUsuario]
     return nombreUsuario ? `${idUsuario} - ${nombreUsuario}` : idUsuario.toString()
   }

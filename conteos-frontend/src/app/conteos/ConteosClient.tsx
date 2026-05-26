@@ -101,7 +101,7 @@ export function ConteosClient() {
       filtered = filtered.filter(c => 
         c.idConteo.toString().includes(searchTerm) ||
         c.IdCentro.toString().includes(searchTerm) ||
-        c.IdUsuario.toString().includes(searchTerm) ||
+        (c.IdUsuario?.toString() ?? '').includes(searchTerm) ||
         (sucursalesMap[c.IdCentro] || '').toLowerCase().includes(searchTermLower)
       )
     }
@@ -158,7 +158,8 @@ export function ConteosClient() {
     return nombreSucursal ? `${idCentro} - ${nombreSucursal}` : idCentro
   }
 
-  const formatUsuario = (idUsuario: number) => {
+  const formatUsuario = (idUsuario: number | null) => {
+    if (idUsuario === null || idUsuario === undefined) return 'Sin asignar'
     const nombreUsuario = usuariosMap[idUsuario]
     return nombreUsuario ? `${idUsuario} - ${nombreUsuario}` : idUsuario.toString()
   }
