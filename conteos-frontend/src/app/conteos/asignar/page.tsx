@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiCalendar, FiUser, FiArrowLeft, FiSave, FiCamera, FiShoppingBag, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
+import { FiCalendar, FiArrowLeft, FiSave, FiCamera, FiShoppingBag, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI, catalogoAPI } from '@/lib/api'
-import { ConteoResponse, ConteoListResponse, User, Usuario } from '@/types/api'
+import { ConteoResponse } from '@/types/api'
 import dynamic from 'next/dynamic'
 
 const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), { ssr: false })
@@ -14,10 +14,8 @@ export default function AsignarConteo() {
   const { user, selectedSucursal } = useAuth()
   const router = useRouter()
   
-  const [usuarios, setUsuarios] = useState<User[]>([])
   const [formData, setFormData] = useState({
     IdCentro: selectedSucursal?.IdCentro || '',
-    IdUser: '',
     FechaAsignacion: ''
   })
   const [productoActual, setProductoActual] = useState({
@@ -33,8 +31,7 @@ export default function AsignarConteo() {
     Producto?: string
   }>>([])
   const [loading, setLoading] = useState(false)
-  const [loadingData, setLoadingData] = useState(true)
-  const [loadingUsers, setLoadingUsers] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
   const [loadingPrecio, setLoadingPrecio] = useState(false)
   const [error, setError] = useState('')
   const [showScanner, setShowScanner] = useState(false)
@@ -49,26 +46,7 @@ export default function AsignarConteo() {
       return
     }
     setFormData(prev => ({ ...prev, IdCentro: selectedSucursal.IdCentro }))
-    loadUsersBySucursal(selectedSucursal.IdCentro)
   }, [selectedSucursal])
-
-  const loadUsersBySucursal = async (centroId: string) => {
-    try {
-      setLoadingUsers(true)
-      setUsuarios([])
-      const response = await conteosAPI.getUsersBySucursal(centroId)
-      setUsuarios(
-        (response as User[])
-          .filter((u: User) => [2, 4, 5].includes(u.NivelUsuario))
-          .sort((a: User, b: User) => (a.NombreUsuario ?? '').localeCompare(b.NombreUsuario ?? '', 'es', { sensitivity: 'base' }))
-      )
-    } catch (err) {
-      console.error('Error al cargar usuarios de la sucursal:', err)
-      setUsuarios([])
-    } finally {
-      setLoadingUsers(false)
-    }
-  }
 
   const openScanner = () => {
     setShowScanner(true)
@@ -173,10 +151,6 @@ export default function AsignarConteo() {
       setError('Agrega al menos un producto para poder asignar el conteo')
       return
     }
-    if (!formData.IdUser) {
-      setFieldErrors({ IdUser: 'Selecciona un usuario' })
-      return
-    }
     if (!formData.FechaAsignacion) {
       setFieldErrors({ FechaAsignacion: 'Selecciona una fecha' })
       return
@@ -194,15 +168,12 @@ export default function AsignarConteo() {
       const datosAsignacion = {
         IdCentro: formData.IdCentro,
         Fechal: formData.FechaAsignacion,
-        IdUsuario: parseInt(formData.IdUser),
         detalles
       }
       await conteosAPI.asignarConteo(datosAsignacion)
       
       // Mostrar toast con información
-      const usuario = usuarios.find(u => u.IdUsuarios.toString() === formData.IdUser)
-      const sucursal = sucursales.find(s => s.IdCentro === formData.IdCentro)
-      setToastMessage(`Conteo asignado a ${usuario?.NombreUsuario || 'usuario'} para la sucursal ${sucursal?.Sucursales || 'sucursal'}`)
+      setToastMessage(`Conteo asignado a la sucursal ${selectedSucursal?.Sucursales || formData.IdCentro}`)
       setShowToast(true)
       
       // Redirigir después de 2 segundos
@@ -574,11 +545,9 @@ export default function AsignarConteo() {
             </div>
           </div>
 
-          {/* Paso 3: Asignar a Usuario */}
+          {/* Paso 3: Fecha de asignación */}
           <div className={`bg-white rounded-xl shadow-sm border overflow-hidden transition-all ${
-            !formData.IdCentro || productosAgregados.length === 0
-              ? 'border-amber-300 bg-amber-50' 
-              : 'border-gray-200'
+            productosAgregados.length === 0 ? 'border-amber-300 bg-amber-50' : 'border-gray-200'
           }`}>
             <div className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
               <div className="flex items-center gap-3">
@@ -586,64 +555,21 @@ export default function AsignarConteo() {
                   3
                 </div>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Asignar a Usuario</h2>
-                  <p className="text-sm text-gray-600">
-                    Selecciona el usuario y la fecha de asignación
-                  </p>
+                  <h2 className="text-lg font-semibold text-gray-900">Fecha de asignación</h2>
+                  <p className="text-sm text-gray-600">Selecciona la fecha para este conteo</p>
                 </div>
               </div>
             </div>
             
             <div className="p-6">
-              {(!formData.IdCentro || productosAgregados.length === 0) && (
+              {productosAgregados.length === 0 && (
                 <div className="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg flex items-start gap-2">
                   <FiAlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-amber-800">
-                    {!formData.IdCentro 
-                      ? 'Selecciona una sucursal primero' 
-                      : 'Agrega al menos un producto para poder asignar el conteo'}
-                  </p>
+                  <p className="text-sm text-amber-800">Agrega al menos un producto para poder asignar el conteo</p>
                 </div>
               )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <FiUser className="inline w-4 h-4 mr-1" />
-                    Asignar a usuario <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    required
-                    disabled={!formData.IdCentro || productosAgregados.length === 0 || loadingUsers}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                      fieldErrors.IdUser ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                    }`}
-                    value={formData.IdUser}
-                    onChange={e => {
-                      setFormData({ ...formData, IdUser: e.target.value })
-                      setFieldErrors({ ...fieldErrors, IdUser: '' })
-                    }}
-                  >
-                    <option value="">
-                      {loadingUsers
-                        ? 'Cargando usuarios...'
-                        : formData.IdCentro && usuarios.length === 0
-                          ? 'Sin usuarios asignados a esta sucursal'
-                          : 'Seleccionar usuario...'}
-                    </option>
-                    {usuarios.map((usuario) => (
-                      <option key={usuario.IdUsuarios} value={usuario.IdUsuarios}>
-                        {usuario.NombreUsuario}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.IdUser && (
-                    <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                      <FiAlertCircle className="w-3 h-3" />
-                      {fieldErrors.IdUser}
-                    </p>
-                  )}
-                </div>
+              <div className="max-w-xs">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FiCalendar className="inline w-4 h-4 mr-1" />
@@ -653,7 +579,7 @@ export default function AsignarConteo() {
                     <input
                       type="date"
                       required
-                      disabled={!formData.IdCentro || productosAgregados.length === 0}
+                      disabled={productosAgregados.length === 0}
                       min={new Date().toISOString().split('T')[0]}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed ${
                         fieldErrors.FechaAsignacion ? 'border-red-300 bg-red-50' : 'border-gray-300'
@@ -700,12 +626,11 @@ export default function AsignarConteo() {
               </button>
               <button
                 type="submit"
-                disabled={loading || !formData.IdCentro || productosAgregados.length === 0 || !formData.IdUser || !formData.FechaAsignacion}
+                disabled={loading || !formData.IdCentro || productosAgregados.length === 0 || !formData.FechaAsignacion}
                 className="flex-1 md:flex-none px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-medium transition-colors flex items-center justify-center gap-2 min-h-[48px]"
                 title={
                   !formData.IdCentro ? 'Selecciona una sucursal' :
                   productosAgregados.length === 0 ? 'Agrega al menos un producto' :
-                  !formData.IdUser ? 'Selecciona un usuario' :
                   !formData.FechaAsignacion ? 'Selecciona una fecha' : ''
                 }
               >

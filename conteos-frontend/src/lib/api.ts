@@ -78,7 +78,7 @@ export const conteosAPI = {
   },
 
   // Asignar conteo
-  asignarConteo: async (data: { IdCentro: string; Fechal?: string; IdUsuario: number; detalles: any[] }) => {
+  asignarConteo: async (data: { IdCentro: string; Fechal?: string; IdUsuario?: number; detalles: any[] }) => {
     const response = await api.post('/api/v1/conteos/asignar', data)
     return response.data
   },

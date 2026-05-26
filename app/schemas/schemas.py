@@ -66,9 +66,9 @@ class ConteoCreate(ConteoBase):
     detalles: List[ConteoDetalleCreate] = Field(..., description="Lista de productos a contar")
 
 class ConteoAsignar(ConteoBase):
-    """Schema para asignar un conteo a otro usuario"""
+    """Schema para asignar un conteo a una sucursal"""
     Fechal: Optional[date] = Field(None, description="Fecha del conteo (opcional, por defecto fecha actual)")
-    IdUsuario: int = Field(..., description="ID del usuario al que se asigna el conteo")
+    IdUsuario: Optional[int] = Field(None, description="ID del usuario asignado (opcional, por defecto el usuario que asigna)")
     detalles: List[ConteoDetalleCreate] = Field(..., description="Lista de productos a contar")
 
 class ConteoEdit(BaseModel):

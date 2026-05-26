@@ -77,15 +77,18 @@ class ConteoService:
     ) -> ConteoResponse:
         """Asignar un conteo a otro usuario"""
         
+        # Determinar el usuario asignado (si no se especifica, usa el que asigna)
+        id_usuario_asignado = conteo_data.IdUsuario if conteo_data.IdUsuario is not None else user_id
+        
         # Verificar que el usuario asignado existe
         usuario_asignado = db.query(Usuarios).filter(
-            Usuarios.IdUsuarios == conteo_data.IdUsuario,
+            Usuarios.IdUsuarios == id_usuario_asignado,
             Usuarios.Estatus == 1
         ).first()
         if not usuario_asignado:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Usuario {conteo_data.IdUsuario} no encontrado o inactivo"
+                detail=f"Usuario {id_usuario_asignado} no encontrado o inactivo"
             )
         
         # Verificar que la sucursal existe
@@ -124,7 +127,7 @@ class ConteoService:
             Envio=0,  # Pendiente porque se asigna
             IdRealizo=user_id,
             IdCentro=conteo_data.IdCentro,
-            IdUsuario=conteo_data.IdUsuario  # Usuario asignado
+            IdUsuario=id_usuario_asignado
         )
         
         db.add(nuevo_conteo)
