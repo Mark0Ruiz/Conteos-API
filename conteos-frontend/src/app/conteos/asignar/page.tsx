@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { FiCalendar, FiArrowLeft, FiSave, FiCamera, FiShoppingBag, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI, catalogoAPI } from '@/lib/api'
-import { ConteoResponse } from '@/types/api'
+import { ConteoResponse, Sucursal } from '@/types/api'
 import dynamic from 'next/dynamic'
 
 const BarcodeScanner = dynamic(() => import('@/components/BarcodeScanner'), { ssr: false })
@@ -14,6 +14,7 @@ export default function AsignarConteo() {
   const { user, selectedSucursal } = useAuth()
   const router = useRouter()
   
+  const [sucursales, setSucursales] = useState<Sucursal[]>([])
   const [formData, setFormData] = useState({
     IdCentro: selectedSucursal?.IdCentro || '',
     FechaAsignacion: ''
@@ -41,12 +42,28 @@ export default function AsignarConteo() {
   const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
-    if (!selectedSucursal) {
-      router.push('/seleccionar-sucursal')
-      return
+    if (user?.NivelUsuario === 4) {
+      if (!selectedSucursal) {
+        router.push('/seleccionar-sucursal')
+        return
+      }
+      setFormData(prev => ({ ...prev, IdCentro: selectedSucursal.IdCentro }))
+    } else {
+      loadSucursales()
     }
-    setFormData(prev => ({ ...prev, IdCentro: selectedSucursal.IdCentro }))
-  }, [selectedSucursal])
+  }, [selectedSucursal, user])
+
+  const loadSucursales = async () => {
+    try {
+      setLoadingData(true)
+      const data = await conteosAPI.getSucursales()
+      setSucursales(data)
+    } catch {
+      setError('Error al cargar las sucursales')
+    } finally {
+      setLoadingData(false)
+    }
+  }
 
   const openScanner = () => {
     setShowScanner(true)
@@ -230,7 +247,7 @@ export default function AsignarConteo() {
     )
   }
 
-  if (!selectedSucursal || loadingData) {
+  if (user?.NivelUsuario === 4 && !selectedSucursal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -281,17 +298,42 @@ export default function AsignarConteo() {
                 <FiShoppingBag className="inline w-4 h-4 mr-1" />
                 Sucursal
               </label>
-              <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <span className="font-semibold text-blue-800">{selectedSucursal.Sucursales}</span>
-                <span className="text-sm text-blue-500">({selectedSucursal.IdCentro})</span>
-                <button
-                  type="button"
-                  onClick={() => router.push('/seleccionar-sucursal')}
-                  className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+              {user?.NivelUsuario === 4 && selectedSucursal ? (
+                <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="font-semibold text-blue-800">{selectedSucursal.Sucursales}</span>
+                  <span className="text-sm text-blue-500">({selectedSucursal.IdCentro})</span>
+                  <button
+                    type="button"
+                    onClick={() => router.push('/seleccionar-sucursal')}
+                    className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <select
+                  required
+                  disabled={loadingData}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${
+                    fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  }`}
+                  value={formData.IdCentro}
+                  onChange={e => {
+                    setFormData(prev => ({ ...prev, IdCentro: e.target.value }))
+                    setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                  }}
                 >
-                  Cambiar
-                </button>
-              </div>
+                  <option value="">{loadingData ? 'Cargando...' : 'Seleccionar sucursal...'}</option>
+                  {sucursales.map(s => (
+                    <option key={s.IdCentro} value={s.IdCentro}>{s.Sucursales} ({s.IdCentro})</option>
+                  ))}
+                </select>
+              )}
+              {fieldErrors.IdCentro && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                  <FiAlertCircle className="w-3 h-3" />{fieldErrors.IdCentro}
+                </p>
+              )}
             </div>
           </div>
 
