@@ -50,6 +50,7 @@ export interface ConteoResponse {
   IdRealizo: number;
   IdCentro: string;
   IdUsuario: number | null;
+  Estatus: number;
   detalles: ConteoDetalleResponse[];
 }
 
@@ -60,6 +61,7 @@ export interface ConteoListResponse {
   IdRealizo: number;
   IdCentro: string;
   IdUsuario: number | null;
+  Estatus: number;
   total_productos: number;
 }
 

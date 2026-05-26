@@ -89,6 +89,7 @@ class ConteoResponse(BaseModel):
     IdRealizo: int
     IdCentro: str
     IdUsuario: Optional[int] = None
+    Estatus: int = 0
     detalles: List[ConteoDetalleResponse]
     
     class Config:
@@ -101,6 +102,7 @@ class ConteoListResponse(BaseModel):
     IdRealizo: int
     IdCentro: str
     IdUsuario: Optional[int] = None
+    Estatus: int = 0
     total_productos: int
     
     class Config:

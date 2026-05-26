@@ -47,7 +47,8 @@ class ConteoService:
             Envio=1,  # Por defecto finalizado al crear
             IdRealizo=user_id,
             IdCentro=conteo_data.IdCentro,
-            IdUsuario=None
+            IdUsuario=None,
+            Estatus=0
         )
         
         db.add(nuevo_conteo)
@@ -128,7 +129,8 @@ class ConteoService:
             Envio=0,  # Pendiente porque se asigna
             IdRealizo=user_id,
             IdCentro=conteo_data.IdCentro,
-            IdUsuario=id_usuario_asignado
+            IdUsuario=id_usuario_asignado,
+            Estatus=0
         )
         
         try:
@@ -300,8 +302,9 @@ class ConteoService:
                 if detalle:
                     detalle.NExcistencia = detalle_update.NExcistencia
         
-        # Marcar el conteo como finalizado
+        # Marcar el conteo como finalizado y contestado
         conteo.Envio = 1
+        conteo.Estatus = 1
         
         db.commit()
         db.refresh(conteo)
@@ -398,6 +401,7 @@ class ConteoService:
                 IdRealizo=conteo.IdRealizo,
                 IdCentro=conteo.IdCentro,
                 IdUsuario=conteo.IdUsuario,
+                Estatus=conteo.Estatus if conteo.Estatus is not None else 0,
                 total_productos=total_productos
             ))
         
@@ -439,5 +443,6 @@ class ConteoService:
             IdRealizo=conteo.IdRealizo,
             IdCentro=conteo.IdCentro,
             IdUsuario=conteo.IdUsuario,
+            Estatus=conteo.Estatus if conteo.Estatus is not None else 0,
             detalles=detalles
         )
