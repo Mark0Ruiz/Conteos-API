@@ -15,7 +15,7 @@ from app.schemas.schemas import (
     ConteoResponse, ConteoListResponse, SuccessResponse
 )
 from app.services.conteo_service import ConteoService
-from app.models.models import Usuarios, Sucursales
+from app.models.models import Usuarios, Sucursales, UsuarioSucursal
 
 router = APIRouter()
 
@@ -24,8 +24,29 @@ async def obtener_sucursales(
     db: Session = Depends(get_db),
     current_user: Usuarios = Depends(require_any_user)
 ):
-    """Obtener lista de sucursales disponibles"""
-    sucursales = db.query(Sucursales).options(joinedload(Sucursales.zona)).all()
+    """Obtener lista de sucursales disponibles.
+    Para NivelUsuario=4, retorna solo las sucursales de la zona asignada al usuario.
+    """
+    query = db.query(Sucursales).options(joinedload(Sucursales.zona))
+
+    if current_user.NivelUsuario == 4:
+        # Obtener los IdCentro asignados al usuario
+        centros_asignados = db.query(UsuarioSucursal.IdCentro).filter(
+            UsuarioSucursal.IdUsuario == current_user.IdUsuarios,
+            UsuarioSucursal.IdCentro.isnot(None)
+        ).all()
+        centros_ids = [c[0] for c in centros_asignados]
+
+        if centros_ids:
+            # Obtener las zonas de esas sucursales
+            zonas = db.query(Sucursales.IdZona).filter(
+                Sucursales.IdCentro.in_(centros_ids)
+            ).distinct().all()
+            zona_ids = [z[0] for z in zonas]
+            # Filtrar sucursales por esas zonas
+            query = query.filter(Sucursales.IdZona.in_(zona_ids))
+
+    sucursales = query.order_by(Sucursales.Sucursales).all()
     return [
         {
             "IdCentro": s.IdCentro,
