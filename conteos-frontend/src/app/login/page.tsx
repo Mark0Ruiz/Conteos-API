@@ -26,11 +26,15 @@ export default function LoginPage() {
     setError('')
 
     try {
-      await login({
+      const loggedUser = await login({
         IdUsuarios: parseInt(credentials.IdUsuarios),
         Contraseña: credentials.Contraseña
       })
-      router.push('/seleccionar-sucursal')
+      if (loggedUser.NivelUsuario === 4) {
+        router.push('/seleccionar-sucursal')
+      } else {
+        router.push('/dashboard')
+      }
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión')
     } finally {

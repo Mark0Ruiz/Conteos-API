@@ -11,7 +11,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   selectedSucursal: Sucursal | null;
-  login: (credentials: { IdUsuarios: number; Contraseña: string }) => Promise<void>;
+  login: (credentials: { IdUsuarios: number; Contraseña: string }) => Promise<User>;
   logout: () => void;
   selectSucursal: (sucursal: Sucursal) => void;
   clearSucursal: () => void;
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (credentials: { IdUsuarios: number; Contraseña: string }) => {
+  const login = async (credentials: { IdUsuarios: number; Contraseña: string }): Promise<User> => {
     try {
       const authData: AuthResponse = await authAPI.login({
         IdUsuarios: Number(credentials.IdUsuarios),
@@ -84,7 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Calcular rol basado en NivelUsuario
       const userRole = getRoleByLevel(authData.user_info.NivelUsuario);
       setRole(userRole as UserRole);
-      
+
+      return authData.user_info;
     } catch (error: any) {
       throw new Error(error.response?.data?.detail || 'Error al iniciar sesión');
     }

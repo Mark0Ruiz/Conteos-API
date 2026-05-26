@@ -21,6 +21,10 @@ export default function SeleccionarSucursal() {
       router.push('/login')
       return
     }
+    if (user && user.NivelUsuario !== 4) {
+      router.push('/dashboard')
+      return
+    }
     if (user) {
       loadSucursales()
     }
