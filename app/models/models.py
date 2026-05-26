@@ -135,7 +135,7 @@ class Conteo(Base):
     Envio = Column(SmallInteger, nullable=False)
     IdRealizo = Column(Integer, ForeignKey("usuarios.IdUsuarios"), nullable=False)
     IdCentro = Column(String(4), ForeignKey("sucursales.IdCentro"), nullable=False)
-    IdUsuario = Column(Integer, ForeignKey("usuarios.IdUsuarios"), nullable=False)
+    IdUsuario = Column(Integer, ForeignKey("usuarios.IdUsuarios"), nullable=True)
     
     # Relaciones
     sucursal = relationship("Sucursales", back_populates="conteos")
