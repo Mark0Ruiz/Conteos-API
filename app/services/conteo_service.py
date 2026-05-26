@@ -131,21 +131,29 @@ class ConteoService:
             IdUsuario=id_usuario_asignado
         )
         
-        db.add(nuevo_conteo)
-        db.flush()
-        
-        # Crear los detalles del conteo
-        for detalle in conteo_data.detalles:
-            nuevo_detalle = ConteoDetalles(
-                IdConteo=nuevo_conteo.idConteo,
-                CodigoBarras=detalle.CodigoBarras,
-                NSistema=detalle.NSistema,
-                NExcistencia=detalle.NExcistencia,
-                Precio=detalle.Precio
+        try:
+            db.add(nuevo_conteo)
+            db.flush()
+            
+            # Crear los detalles del conteo
+            for detalle in conteo_data.detalles:
+                nuevo_detalle = ConteoDetalles(
+                    IdConteo=nuevo_conteo.idConteo,
+                    CodigoBarras=detalle.CodigoBarras,
+                    NSistema=detalle.NSistema,
+                    NExcistencia=detalle.NExcistencia,
+                    Precio=detalle.Precio
+                )
+                db.add(nuevo_detalle)
+            
+            db.commit()
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error al guardar el conteo: {str(e)}"
             )
-            db.add(nuevo_detalle)
         
-        db.commit()
         db.refresh(nuevo_conteo)
         
         return ConteoService._build_conteo_response(db, nuevo_conteo)
