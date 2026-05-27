@@ -71,6 +71,7 @@ export default function GestionAppsPage() {
   const [saving, setSaving] = useState(false)
   const [saveSuccess, setSaveSuccess] = useState(false)
   const [loadingModal, setLoadingModal] = useState(false)
+  const [errorDetail, setErrorDetail] = useState('')
 
   // Verificar acceso
   useEffect(() => {
@@ -90,14 +91,20 @@ export default function GestionAppsPage() {
   const loadData = async () => {
     try {
       setLoading(true)
+      setError('')
+      setErrorDetail('')
       const [users, sucursales] = await Promise.all([
         authAPI.getAppUsuarios(),
         conteosAPI.getSucursales()
       ])
       setAppUsers(users)
       setAllSucursales(sucursales)
-    } catch {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: { detail?: string } }; message?: string }
+      const status = axiosErr?.response?.status
+      const detail = axiosErr?.response?.data?.detail || axiosErr?.message || 'Error desconocido'
       setError('Error al cargar los datos')
+      setErrorDetail(`HTTP ${status ?? 'N/A'}: ${detail}`)
     } finally {
       setLoading(false)
     }
@@ -212,6 +219,9 @@ export default function GestionAppsPage() {
         <div className="text-center">
           <FiAlertCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
           <p className="text-gray-700">{error}</p>
+          {errorDetail && (
+            <p className="text-xs text-gray-500 mt-1 font-mono bg-gray-100 rounded px-3 py-2 max-w-sm mx-auto break-all">{errorDetail}</p>
+          )}
           <button onClick={loadData} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">
             Reintentar
           </button>
