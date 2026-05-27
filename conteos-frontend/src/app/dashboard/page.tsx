@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin, FiFilter } from 'react-icons/fi'
+import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI } from '@/lib/api'
 import { formatShortDate } from '@/lib/dateUtils'
@@ -15,14 +15,12 @@ export default function Dashboard() {
   const [stats, setStats] = useState({
     totalConteos: 0,
     conteosPendientes: 0,
-    conteosAsignados: 0,
-    conteosCompletados: 0,
-    cambioCompletados: 0,
     conteosNoValidados: 0,
-    conteosValidados: 0
+    conteosValidados: 0,
+    cambioCompletados: 0
   })
-  const [allConteosList, setAllConteosList] = useState<ConteoListResponse[]>([])
-  const [filtroEstatus, setFiltroEstatus] = useState<'todos' | '0' | '1'>('todos')
+  const [allConteos, setAllConteos] = useState<ConteoListResponse[]>([])
+  const [filtroEstatus, setFiltroEstatus] = useState<number | null>(null)
   const [sucursalesMap, setSucursalesMap] = useState<Record<string, string>>({})
   const [usuariosMap, setUsuariosMap] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
@@ -62,22 +60,18 @@ export default function Dashboard() {
       // Calcular estadísticas
       const totalConteos = conteos.length
       const conteosPendientes = conteos.filter((c: any) => c.Envio === 0).length
-      const conteosFinalizados = conteos.filter((c: any) => c.Envio === 1).length
-      const conteosCompletados = conteosFinalizados
-      const conteosNoValidados = conteos.filter((c: any) => (c.Estatus ?? 0) === 0).length
+      const conteosNoValidados = conteos.filter((c: any) => c.Estatus === 0).length
       const conteosValidados = conteos.filter((c: any) => c.Estatus === 1).length
       
       setStats({
         totalConteos,
         conteosPendientes,
-        conteosAsignados: conteosFinalizados,
-        conteosCompletados,
-        cambioCompletados: 0,
         conteosNoValidados,
-        conteosValidados
+        conteosValidados,
+        cambioCompletados: 0
       })
       setLastUpdate(new Date())
-      setAllConteosList(conteosOrdenados)
+      setAllConteos(conteosOrdenados)
     } catch (error) {
       console.error('Error loading dashboard data:', error)
     } finally {
@@ -94,13 +88,6 @@ export default function Dashboard() {
       default:
         return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Desconocido</span>
     }
-  }
-
-  const getEstatusBadge = (estatus: number) => {
-    if (estatus === 1) {
-      return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Validado</span>
-    }
-    return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Sin validar</span>
   }
 
   const formatSucursal = (idCentro: string) => {
@@ -141,9 +128,9 @@ export default function Dashboard() {
   const canEditConteo = user && ['Administrador', 'Supervisor'].includes(userRole || '')
   const canAnswerConteo = true // Todos los usuarios pueden contestar conteos asignados
 
-  const filteredConteos = allConteosList
-    .filter(c => filtroEstatus === 'todos' ? true : (c.Estatus ?? 0) === parseInt(filtroEstatus))
-    .slice(0, 20)
+  const conteosParaMostrar = filtroEstatus !== null
+    ? allConteos.filter((c: ConteoListResponse) => c.Estatus === filtroEstatus)
+    : allConteos.slice(0, 5)
 
   if (loading) {
     return (
@@ -230,48 +217,53 @@ export default function Dashboard() {
             </div>
           </button>
 
-          {/* Asignados - Prioridad Media */}
+          {/* Sin Validar */}
           <button
-            onClick={() => router.push('/conteos')}
-            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group"
+            onClick={() => setFiltroEstatus(filtroEstatus === 0 ? null : 0)}
+            className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group ${
+              filtroEstatus === 0 ? 'ring-2 ring-red-400 ring-opacity-75' : ''
+            }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <FiUsers className="h-6 w-6 text-orange-600" />
-                  <p className="text-sm font-medium text-gray-600">Asignados</p>
+                  <FiAlertCircle className="h-6 w-6 text-red-500" />
+                  <p className="text-sm font-medium text-gray-600">Sin Validar</p>
                 </div>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.conteosAsignados}</p>
-                <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.conteosNoValidados}</p>
+                <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                   <FiClock className="w-3 h-3" />
-                  {getTimeAgo(lastUpdate)}
+                  Estatus = 0
                 </p>
               </div>
+              {filtroEstatus === 0 && (
+                <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Filtrado</span>
+              )}
             </div>
           </button>
 
-          {/* Completados - Con tendencia */}
+          {/* Validados */}
           <button
-            onClick={() => router.push('/conteos')}
-            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group"
+            onClick={() => setFiltroEstatus(filtroEstatus === 1 ? null : 1)}
+            className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group ${
+              filtroEstatus === 1 ? 'ring-2 ring-green-400 ring-opacity-75' : ''
+            }`}
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <FiCheckCircle className="h-6 w-6 text-green-600" />
-                  <p className="text-sm font-medium text-gray-600">Completados</p>
+                  <p className="text-sm font-medium text-gray-600">Validados</p>
                 </div>
-                <div className="flex items-baseline gap-2 mt-2">
-                  <p className="text-3xl font-bold text-gray-900">{stats.conteosCompletados}</p>
-                  {stats.cambioCompletados > 0 && (
-                    <span className="text-xs text-green-600 flex items-center gap-0.5">
-                      <FiTrendingUp className="w-3 h-3" />
-                      +{stats.cambioCompletados}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 mt-2">vs período anterior</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.conteosValidados}</p>
+                <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                  <FiCheckCircle className="w-3 h-3" />
+                  Estatus = 1
+                </p>
               </div>
+              {filtroEstatus === 1 && (
+                <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded-full">Filtrado</span>
+              )}
             </div>
           </button>
 
@@ -288,47 +280,6 @@ export default function Dashboard() {
                 <p className="text-sm font-medium text-gray-600">Total Conteos</p>
                 <p className="text-3xl font-bold text-gray-900 mt-1">{stats.totalConteos}</p>
               </div>
-            </div>
-          </button>
-        </div>
-
-        {/* Validación de Conteos */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8">
-          <button
-            onClick={() => setFiltroEstatus(filtroEstatus === '0' ? 'todos' : '0')}
-            className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group ${filtroEstatus === '0' ? 'ring-2 ring-red-400 ring-opacity-75' : ''}`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <FiAlertCircle className="h-6 w-6 text-red-500" />
-                  <p className="text-sm font-medium text-gray-600">Sin Validar</p>
-                </div>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.conteosNoValidados}</p>
-                <p className="text-xs text-red-500 mt-2">Conteos pendientes de validación</p>
-              </div>
-              {filtroEstatus === '0' && (
-                <span className="px-2 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-full">Filtro activo</span>
-              )}
-            </div>
-          </button>
-
-          <button
-            onClick={() => setFiltroEstatus(filtroEstatus === '1' ? 'todos' : '1')}
-            className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 text-left group ${filtroEstatus === '1' ? 'ring-2 ring-blue-400 ring-opacity-75' : ''}`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <FiCheckCircle className="h-6 w-6 text-blue-500" />
-                  <p className="text-sm font-medium text-gray-600">Validados</p>
-                </div>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats.conteosValidados}</p>
-                <p className="text-xs text-blue-500 mt-2">Conteos contestados y validados</p>
-              </div>
-              {filtroEstatus === '1' && (
-                <span className="px-2 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-full">Filtro activo</span>
-              )}
             </div>
           </button>
         </div>
@@ -422,88 +373,74 @@ export default function Dashboard() {
 
         {/* Recent Conteos Table */}
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="px-6 py-5 border-b border-gray-200 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Conteos Recientes</h2>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {filtroEstatus === null ? 'Conteos Recientes' : filtroEstatus === 0 ? 'Conteos Sin Validar' : 'Conteos Validados'}
+              </h2>
               <p className="text-sm text-gray-500 mt-1">
-                {filtroEstatus === 'todos' ? 'Mostrando hasta 20 conteos' : filtroEstatus === '0' ? 'Filtro: Sin validar' : 'Filtro: Validados'}
-                {' — '}{filteredConteos.length} resultado(s)
+                {filtroEstatus === null ? 'Últimos 5 conteos registrados' : `${conteosParaMostrar.length} conteo(s) encontrado(s)`}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <FiFilter className="w-4 h-4 text-gray-400" />
-              <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
-                <button
-                  onClick={() => setFiltroEstatus('todos')}
-                  className={`px-3 py-1.5 transition-colors ${filtroEstatus === 'todos' ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >Todos</button>
-                <button
-                  onClick={() => setFiltroEstatus('0')}
-                  className={`px-3 py-1.5 border-l border-gray-200 transition-colors ${filtroEstatus === '0' ? 'bg-red-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >Sin validar</button>
-                <button
-                  onClick={() => setFiltroEstatus('1')}
-                  className={`px-3 py-1.5 border-l border-gray-200 transition-colors ${filtroEstatus === '1' ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-                >Validados</button>
-              </div>
-            </div>
+            {filtroEstatus !== null && (
+              <button
+                onClick={() => setFiltroEstatus(null)}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                Limpiar filtro
+              </button>
+            )}
           </div>
           <div className="md:hidden p-4 space-y-3">
-            {filteredConteos.map((conteo) => (
+            {conteosParaMostrar.map((conteo: any) => (
               <div key={conteo.idConteo} className="border border-gray-200 rounded-lg p-4 shadow-sm">
                 <div className="flex items-start justify-between">
                   <p className="text-lg font-semibold text-gray-900">#{conteo.idConteo}</p>
-                  <div className="flex flex-col gap-1 items-end">
-                    {getStatusBadge(conteo.Envio)}
-                    {getEstatusBadge(conteo.Estatus ?? 0)}
-                  </div>
+                  {getStatusBadge(conteo.Envio)}
                 </div>
                 <div className="mt-3 space-y-1 text-sm text-gray-700">
                   <p><span className="text-gray-500">Centro:</span> {formatSucursal(conteo.IdCentro)}</p>
                   <p><span className="text-gray-500">Usuario:</span> {formatUsuario(conteo.IdUsuario)}</p>
                   <p><span className="text-gray-500">Fecha:</span> {formatShortDate(conteo.Fechal)}</p>
-                  <p><span className="text-gray-500">Productos:</span> {conteo.total_productos}</p>
+                  <p><span className="text-gray-500">Productos:</span> {conteo.total_productos || 0}</p>
                 </div>
               </div>
             ))}
 
-            {filteredConteos.length === 0 && (
+            {conteosParaMostrar.length === 0 && (
               <div className="text-center py-8">
                 <FiPackage className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">No hay conteos{filtroEstatus !== 'todos' ? ' con ese filtro' : ' registrados'}</p>
+                <p className="text-gray-500 font-medium">No hay conteos registrados</p>
               </div>
             )}
           </div>
 
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full min-w-[1100px] divide-y divide-gray-200">
+            <table className="w-full min-w-[980px] divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 min-w-[90px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     ID
                   </th>
-                  <th className="px-6 py-3 min-w-[200px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 min-w-[220px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Centro
                   </th>
-                  <th className="px-6 py-3 min-w-[200px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 min-w-[240px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Usuario Asignado
                   </th>
-                  <th className="px-6 py-3 min-w-[130px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 min-w-[140px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha
                   </th>
-                  <th className="px-6 py-3 min-w-[120px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 min-w-[140px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
                   <th className="px-6 py-3 min-w-[120px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Validación
-                  </th>
-                  <th className="px-6 py-3 min-w-[100px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Productos
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredConteos.map((conteo) => (
+                {conteosParaMostrar.map((conteo: any) => (
                   <tr key={conteo.idConteo} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       #{conteo.idConteo}
@@ -523,22 +460,19 @@ export default function Dashboard() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(conteo.Envio)}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {getEstatusBadge(conteo.Estatus ?? 0)}
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {conteo.total_productos}
+                      {conteo.total_productos || 0}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             
-            {filteredConteos.length === 0 && (
+            {conteosParaMostrar.length === 0 && (
               <div className="text-center py-12">
                 <FiPackage className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">No hay conteos{filtroEstatus !== 'todos' ? ' con ese filtro' : ' registrados'}</p>
-                <p className="text-sm text-gray-400 mt-1">{filtroEstatus !== 'todos' ? 'Prueba con otro filtro' : 'Crea tu primer conteo para comenzar'}</p>
+                <p className="text-gray-500 font-medium">No hay conteos registrados</p>
+                <p className="text-sm text-gray-400 mt-1">Crea tu primer conteo para comenzar</p>
               </div>
             )}
           </div>

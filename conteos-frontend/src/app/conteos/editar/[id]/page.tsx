@@ -88,17 +88,6 @@ export default function EditarConteoPage() {
     ))
   }
 
-  const handleNExcistenciaChange = (idConteoDetalles: number, newValue: string) => {
-    const value = parseFloat(newValue)
-    if (isNaN(value) || value < 0) return
-    
-    setDetalles(detalles.map(d => 
-      d.idConteoDetalles === idConteoDetalles 
-        ? { ...d, NExcistencia: value }
-        : d
-    ))
-  }
-
   const handleSave = async () => {
     try {
       setSaving(true)
@@ -225,7 +214,7 @@ export default function EditarConteoPage() {
             <div className="text-sm text-blue-800">
               <p className="font-medium">Instrucciones:</p>
               <p className="mt-1">
-                Puedes editar las <strong>existencias en sistema (N° Sistema)</strong> y las <strong>existencias físicas (N° Física)</strong> de los productos.
+                Puedes editar las <strong>existencias en sistema (N° Sistema)</strong> de los productos. Las existencias físicas son de solo lectura.
               </p>
             </div>
           </div>
@@ -274,17 +263,10 @@ export default function EditarConteoPage() {
                     </label>
 
                     <div className="grid grid-cols-2 gap-3">
-                      <label className="block">
-                        <span className="text-gray-600 text-xs">N° Física (Editable)</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={detalle.NExcistencia}
-                          onChange={(e) => handleNExcistenciaChange(detalle.idConteoDetalles, e.target.value)}
-                          className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 font-medium"
-                        />
-                      </label>
+                      <div>
+                        <span className="text-gray-600 text-xs">N° Física</span>
+                        <p className="mt-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg font-medium text-gray-700">{detalle.NExcistencia}</p>
+                      </div>
                       <div>
                         <p className="text-xs text-gray-600">Precio</p>
                         <p className="font-medium text-gray-900">${detalle.Precio.toFixed(2)}</p>
@@ -323,7 +305,7 @@ export default function EditarConteoPage() {
                     N° Sistema (Editable)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    N° Existencia Física (Editable)
+                    N° Existencia Física
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Precio
@@ -354,15 +336,8 @@ export default function EditarConteoPage() {
                           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-yellow-50 font-medium"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={detalle.NExcistencia}
-                          onChange={(e) => handleNExcistenciaChange(detalle.idConteoDetalles, e.target.value)}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-green-50 font-medium"
-                        />
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {detalle.NExcistencia}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${detalle.Precio.toFixed(2)}
