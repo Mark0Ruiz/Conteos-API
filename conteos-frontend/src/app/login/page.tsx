@@ -30,7 +30,7 @@ export default function LoginPage() {
         IdUsuarios: parseInt(credentials.IdUsuarios),
         Contraseña: credentials.Contraseña
       })
-      if (loggedUser.NivelUsuario === 4) {
+      if ([2, 4].includes(loggedUser.NivelUsuario)) {
         router.push('/seleccionar-sucursal')
       } else {
         router.push('/dashboard')

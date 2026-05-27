@@ -52,7 +52,8 @@ async def obtener_sucursales(
             "IdCentro": s.IdCentro,
             "Sucursales": s.Sucursales,
             "IdZona": s.IdZona,
-            "Zona": s.zona.Zona if s.zona else None
+            "Zona": s.zona.Zona if s.zona else None,
+            "IdTipoSucursal": s.IdTipoSucursal
         }
         for s in sucursales
     ]

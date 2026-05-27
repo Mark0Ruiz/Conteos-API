@@ -85,6 +85,7 @@ export interface Sucursal {
   Sucursales: string;
   IdZona: number;
   Zona: string | null;
+  IdTipoSucursal?: string;
 }
 
 export interface ApiError {

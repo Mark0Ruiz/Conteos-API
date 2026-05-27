@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiSearch, FiMapPin, FiChevronRight, FiLogOut } from 'react-icons/fi'
+import { FiSearch, FiMapPin, FiChevronRight, FiLogOut, FiArrowLeft, FiMap } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI } from '@/lib/api'
 import { Sucursal } from '@/types/api'
@@ -15,13 +15,15 @@ export default function SeleccionarSucursal() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
+  const [step, setStep] = useState<1 | 2>(1)
+  const [selectedZona, setSelectedZona] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push('/login')
       return
     }
-    if (user && user.NivelUsuario !== 4) {
+    if (user && ![2, 4].includes(user.NivelUsuario)) {
       router.push('/dashboard')
       return
     }
@@ -33,7 +35,9 @@ export default function SeleccionarSucursal() {
   const loadSucursales = async () => {
     try {
       const data = await conteosAPI.getSucursales()
-      setSucursales(data)
+      // Solo mostrar sucursales de tipo 'T'
+      const tipoT = data.filter((s: Sucursal) => s.IdTipoSucursal === 'T')
+      setSucursales(tipoT)
     } catch {
       setError('Error al cargar las sucursales')
     } finally {
@@ -46,20 +50,16 @@ export default function SeleccionarSucursal() {
     router.push('/sucursal')
   }
 
-  const filtered = sucursales.filter(s =>
-    s.Sucursales.toLowerCase().includes(search.toLowerCase()) ||
-    s.IdCentro.toLowerCase().includes(search.toLowerCase()) ||
-    (s.Zona || '').toLowerCase().includes(search.toLowerCase())
-  )
+  // Zonas únicas ordenadas
+  const zonas = [...new Set(sucursales.map(s => s.Zona || 'Sin zona'))].sort()
 
-  // Agrupar por zona
-  const porZona: Record<string, Sucursal[]> = {}
-  filtered.forEach(s => {
-    const zona = s.Zona || 'Sin zona'
-    if (!porZona[zona]) porZona[zona] = []
-    porZona[zona].push(s)
-  })
-  const zonas = Object.keys(porZona).sort()
+  // Sucursales de la zona seleccionada con búsqueda
+  const sucursalesDeZona = sucursales
+    .filter(s => (s.Zona || 'Sin zona') === selectedZona)
+    .filter(s =>
+      s.Sucursales.toLowerCase().includes(search.toLowerCase()) ||
+      s.IdCentro.toLowerCase().includes(search.toLowerCase())
+    )
 
   if (isLoading || loading) {
     return (
@@ -74,11 +74,23 @@ export default function SeleccionarSucursal() {
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Seleccionar Sucursal</h1>
-            <p className="text-sm text-gray-500">
-              {user?.NombreUsuario} — elige la sucursal de trabajo
-            </p>
+          <div className="flex items-center gap-3">
+            {step === 2 && (
+              <button
+                onClick={() => { setStep(1); setSearch('') }}
+                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <FiArrowLeft className="w-5 h-5 text-gray-600" />
+              </button>
+            )}
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">
+                {step === 1 ? 'Seleccionar Zona' : `Zona: ${selectedZona}`}
+              </h1>
+              <p className="text-sm text-gray-500">
+                {user?.NombreUsuario} — {step === 1 ? 'elige la zona de trabajo' : 'elige la sucursal de trabajo'}
+              </p>
+            </div>
           </div>
           <button
             onClick={logout}
@@ -88,39 +100,80 @@ export default function SeleccionarSucursal() {
             Salir
           </button>
         </div>
+
+        {/* Indicador de pasos */}
+        <div className="max-w-3xl mx-auto px-4 pb-3 flex items-center gap-2">
+          <div className={`flex items-center gap-1.5 text-xs font-medium ${step === 1 ? 'text-blue-600' : 'text-green-600'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${step === 1 ? 'bg-blue-600 text-white' : 'bg-green-500 text-white'}`}>
+              {step === 2 ? '✓' : '1'}
+            </span>
+            Zona
+          </div>
+          <div className="flex-1 h-px bg-gray-200" />
+          <div className={`flex items-center gap-1.5 text-xs font-medium ${step === 2 ? 'text-blue-600' : 'text-gray-400'}`}>
+            <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${step === 2 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'}`}>2</span>
+            Sucursal
+          </div>
+        </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
-        {/* Búsqueda */}
-        <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar por nombre, ID o zona..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10 w-full border border-gray-300 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {filtered.length === 0 && !loading && (
-          <p className="text-center text-gray-500 py-12">No se encontraron sucursales</p>
+        {/* PASO 1: Lista de zonas */}
+        {step === 1 && (
+          <>
+            {zonas.length === 0 && (
+              <p className="text-center text-gray-500 py-12">No hay zonas disponibles</p>
+            )}
+            <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100 overflow-hidden">
+              {zonas.map(zona => {
+                const count = sucursales.filter(s => (s.Zona || 'Sin zona') === zona).length
+                return (
+                  <button
+                    key={zona}
+                    onClick={() => { setSelectedZona(zona); setStep(2); setSearch('') }}
+                    className="w-full flex items-center gap-4 px-4 py-4 hover:bg-blue-50 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                      <FiMap className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">{zona}</p>
+                      <p className="text-sm text-gray-500">{count} sucursal{count !== 1 ? 'es' : ''}</p>
+                    </div>
+                    <FiChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  </button>
+                )
+              })}
+            </div>
+          </>
         )}
 
-        {/* Lista agrupada por zona */}
-        {zonas.map(zona => (
-          <div key={zona}>
-            <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
-              {zona}
-            </h2>
+        {/* PASO 2: Sucursales de la zona */}
+        {step === 2 && (
+          <>
+            <div className="relative">
+              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por nombre o ID..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                className="pl-10 w-full border border-gray-300 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {sucursalesDeZona.length === 0 && (
+              <p className="text-center text-gray-500 py-12">No se encontraron sucursales</p>
+            )}
+
             <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100 overflow-hidden">
-              {porZona[zona].map(sucursal => (
+              {sucursalesDeZona.map(sucursal => (
                 <button
                   key={sucursal.IdCentro}
                   onClick={() => handleSelect(sucursal)}
@@ -137,8 +190,8 @@ export default function SeleccionarSucursal() {
                 </button>
               ))}
             </div>
-          </div>
-        ))}
+          </>
+        )}
       </div>
     </div>
   )
