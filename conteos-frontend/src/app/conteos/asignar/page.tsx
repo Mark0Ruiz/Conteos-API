@@ -15,6 +15,7 @@ export default function AsignarConteo() {
   const router = useRouter()
   
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
+  const [filtroZona, setFiltroZona] = useState('')
   const [formData, setFormData] = useState({
     IdCentro: selectedSucursal?.IdCentro || '',
     FechaAsignacion: ''
@@ -102,7 +103,7 @@ export default function AsignarConteo() {
     // Validar campos
     const errors: { [key: string]: string } = {}
     if (!productoActual.CodigoBarras) errors.CodigoBarras = 'El código de barras es requerido'
-    if (productoActual.NSistema < 0) errors.NSistema = 'La cantidad no puede ser negativa'
+    if (productoActual.NSistema <= 0) errors.NSistema = 'La cantidad debe ser mayor a 0'
     if (productoActual.Precio <= 0) errors.Precio = 'El precio debe ser mayor a 0'
 
     if (Object.keys(errors).length > 0) {
@@ -311,23 +312,50 @@ export default function AsignarConteo() {
                   </button>
                 </div>
               ) : (
-                <select
-                  required
-                  disabled={loadingData}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${
-                    fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                  }`}
-                  value={formData.IdCentro}
-                  onChange={e => {
-                    setFormData(prev => ({ ...prev, IdCentro: e.target.value }))
-                    setFieldErrors({ ...fieldErrors, IdCentro: '' })
-                  }}
-                >
-                  <option value="">{loadingData ? 'Cargando...' : 'Seleccionar sucursal...'}</option>
-                  {sucursales.map(s => (
-                    <option key={s.IdCentro} value={s.IdCentro}>{s.Sucursales} ({s.IdCentro})</option>
-                  ))}
-                </select>
+                <div className="space-y-3">
+                  {/* Filtro por zona */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Filtrar por zona</label>
+                    <select
+                      disabled={loadingData}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 text-sm"
+                      value={filtroZona}
+                      onChange={e => {
+                        setFiltroZona(e.target.value)
+                        setFormData(prev => ({ ...prev, IdCentro: '' }))
+                        setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                      }}
+                    >
+                      <option value="">Todas las zonas</option>
+                      {[...new Set(sucursales.map(s => s.Zona || 'Sin zona'))].sort().map(z => (
+                        <option key={z} value={z}>{z}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {/* Selector de sucursal filtrado */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Sucursal</label>
+                    <select
+                      required
+                      disabled={loadingData}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${
+                        fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                      }`}
+                      value={formData.IdCentro}
+                      onChange={e => {
+                        setFormData(prev => ({ ...prev, IdCentro: e.target.value }))
+                        setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                      }}
+                    >
+                      <option value="">{loadingData ? 'Cargando...' : 'Seleccionar sucursal...'}</option>
+                      {sucursales
+                        .filter(s => !filtroZona || (s.Zona || 'Sin zona') === filtroZona)
+                        .map(s => (
+                          <option key={s.IdCentro} value={s.IdCentro}>{s.Sucursales} ({s.IdCentro})</option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
               )}
               {fieldErrors.IdCentro && (
                 <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
@@ -418,7 +446,7 @@ export default function AsignarConteo() {
                           fieldErrors.NSistema ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
                         placeholder="0"
-                          value={productoActual.NSistema === 0 ? '' : productoActual.NSistema}
+                        value={productoActual.NSistema || ''}
                         onChange={(e) => {
                           setProductoActual({ ...productoActual, NSistema: parseFloat(e.target.value) || 0 })
                           setFieldErrors({ ...fieldErrors, NSistema: '' })
