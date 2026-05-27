@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FiSearch, FiMapPin, FiChevronRight, FiLogOut, FiArrowLeft, FiMap } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
-import { conteosAPI } from '@/lib/api'
+import { conteosAPI, authAPI } from '@/lib/api'
 import { Sucursal } from '@/types/api'
 
 export default function SeleccionarSucursal() {
@@ -34,7 +34,13 @@ export default function SeleccionarSucursal() {
 
   const loadSucursales = async () => {
     try {
-      const data = await conteosAPI.getSucursales()
+      // NivelUsuario=4 (APP): solo mostrar sus sucursales asignadas
+      const data = user?.NivelUsuario === 4
+        ? await authAPI.getAppSucursales(user.IdUsuarios)
+        : await conteosAPI.getSucursales()
+      if (user?.NivelUsuario === 4 && data.length === 0) {
+        setError('No tienes sucursales asignadas. Contacta a tu coordinador.')
+      }
       setSucursales(data)
     } catch {
       setError('Error al cargar las sucursales')

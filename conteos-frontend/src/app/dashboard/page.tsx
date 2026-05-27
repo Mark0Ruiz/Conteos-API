@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin } from 'react-icons/fi'
+import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin, FiSmartphone } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI } from '@/lib/api'
 import { formatShortDate } from '@/lib/dateUtils'
@@ -129,6 +129,9 @@ export default function Dashboard() {
   const canAssignConteo = user && ['Administrador', 'Supervisor', 'CCA'].includes(userRole || '')
   const canEditConteo = user && ['Administrador', 'Supervisor'].includes(userRole || '')
   const canAnswerConteo = true // Todos los usuarios pueden contestar conteos asignados
+  const canGestionarApps = user && (
+    user.NivelUsuario === 1 || user.NivelUsuario === 2 || [52033, 61752].includes(user.IdUsuarios)
+  )
 
   const conteosParaMostrar = filtroEstatus !== null
     ? allConteos.filter((c: ConteoListResponse) => c.Estatus === filtroEstatus)
@@ -355,6 +358,18 @@ export default function Dashboard() {
               <span className="font-medium text-center">Catálogo</span>
               <span className="text-xs text-teal-600 mt-1 text-center">Productos</span>
             </button>
+            
+            {canGestionarApps && (
+              <button
+                onClick={() => router.push('/apps')}
+                className="group relative flex flex-col items-center justify-center px-6 py-5 bg-white border-2 border-violet-500 text-violet-700 rounded-xl hover:bg-violet-50 hover:shadow-md transition-all duration-200"
+                title="Gestionar sucursales de usuarios APP"
+              >
+                <FiSmartphone className="w-6 h-6 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="font-medium text-center">Gestión APPs</span>
+                <span className="text-xs text-violet-600 mt-1 text-center">Asignar sucursales</span>
+              </button>
+            )}
             
             {canEditConteo && stats.conteosPendientes > 0 && (
               <button

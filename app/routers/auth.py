@@ -1,13 +1,13 @@
 from datetime import timedelta
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.security import authenticate_user, create_access_token, get_user_role, get_current_user
 from app.schemas.schemas import Token, UsuarioLogin, UsuarioResponse
-from app.models.models import Usuarios, UsuarioSucursal
+from app.models.models import Usuarios, UsuarioSucursal, Sucursales
 
 router = APIRouter()
 
@@ -107,3 +107,87 @@ async def get_usuarios_por_sucursal(
         NivelUsuario=usuario.NivelUsuario,
         Estatus=usuario.Estatus
     ) for usuario in usuarios]
+
+# ---------------------------------------------------------------------------
+# IDs de usuarios con permiso de gestionar asignaciones de APPs
+# (además de NivelUsuario 1 y 2)
+# ---------------------------------------------------------------------------
+USERS_GESTION_APPS = {52033, 61752}
+NIVELES_GESTION_APPS = {1, 2}
+
+def _check_gestion_apps(current_user: Usuarios):
+    if current_user.NivelUsuario not in NIVELES_GESTION_APPS and current_user.IdUsuarios not in USERS_GESTION_APPS:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para gestionar asignaciones de APP"
+        )
+
+@router.get("/apps", response_model=List[dict])
+async def get_app_usuarios(
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(get_current_user)
+):
+    """Listar usuarios APP (NivelUsuario=4) con conteo de sucursales asignadas."""
+    _check_gestion_apps(current_user)
+    usuarios = db.query(Usuarios).filter(Usuarios.NivelUsuario == 4).order_by(Usuarios.NombreUsuario).all()
+    result = []
+    for u in usuarios:
+        count = db.query(UsuarioSucursal).filter(UsuarioSucursal.IdUsuario == u.IdUsuarios).count()
+        result.append({
+            "IdUsuarios": u.IdUsuarios,
+            "NombreUsuario": u.NombreUsuario,
+            "NivelUsuario": u.NivelUsuario,
+            "Estatus": u.Estatus,
+            "sucursales_count": count
+        })
+    return result
+
+@router.get("/apps/{user_id}/sucursales", response_model=List[dict])
+async def get_app_sucursales(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(get_current_user)
+):
+    """Obtener sucursales asignadas a un usuario APP. El propio usuario puede consultar las suyas."""
+    if current_user.IdUsuarios != user_id:
+        _check_gestion_apps(current_user)
+    asignaciones = db.query(UsuarioSucursal).filter(UsuarioSucursal.IdUsuario == user_id).all()
+    ids = [a.IdCentro for a in asignaciones if a.IdCentro]
+    if not ids:
+        return []
+    sucursales = (
+        db.query(Sucursales)
+        .options(joinedload(Sucursales.zona))
+        .filter(Sucursales.IdCentro.in_(ids))
+        .order_by(Sucursales.Sucursales)
+        .all()
+    )
+    return [
+        {
+            "IdCentro": s.IdCentro,
+            "Sucursales": s.Sucursales,
+            "IdZona": s.IdZona,
+            "Zona": s.zona.Zona if s.zona else None,
+            "IdTipoSucursal": s.IdTipoSucursal
+        }
+        for s in sucursales
+    ]
+
+@router.put("/apps/{user_id}/sucursales")
+async def set_app_sucursales(
+    user_id: int,
+    centros: List[str] = Body(...),
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(get_current_user)
+):
+    """Reemplazar todas las sucursales asignadas a un usuario APP (operación bulk)."""
+    _check_gestion_apps(current_user)
+    usuario = db.query(Usuarios).filter(Usuarios.IdUsuarios == user_id, Usuarios.NivelUsuario == 4).first()
+    if not usuario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario APP no encontrado")
+    db.query(UsuarioSucursal).filter(UsuarioSucursal.IdUsuario == user_id).delete()
+    for centro in centros:
+        db.add(UsuarioSucursal(IdUsuario=user_id, IdCentro=centro))
+    db.commit()
+    return {"message": f"{len(centros)} sucursales asignadas correctamente", "count": len(centros)}
+

@@ -49,6 +49,22 @@ export const authAPI = {
   getRole: async () => {
     const response = await api.get('/api/v1/auth/role')
     return response.data
+  },
+
+  // Gestión de usuarios APP
+  getAppUsuarios: async () => {
+    const response = await api.get('/api/v1/auth/apps')
+    return response.data
+  },
+
+  getAppSucursales: async (userId: number) => {
+    const response = await api.get(`/api/v1/auth/apps/${userId}/sucursales`)
+    return response.data
+  },
+
+  setAppSucursales: async (userId: number, centros: string[]) => {
+    const response = await api.put(`/api/v1/auth/apps/${userId}/sucursales`, centros)
+    return response.data
   }
 }
 
