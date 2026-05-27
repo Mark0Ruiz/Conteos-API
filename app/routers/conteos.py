@@ -29,23 +29,6 @@ async def obtener_sucursales(
     """
     query = db.query(Sucursales).options(joinedload(Sucursales.zona))
 
-    if current_user.NivelUsuario == 4:
-        # Obtener los IdCentro asignados al usuario
-        centros_asignados = db.query(UsuarioSucursal.IdCentro).filter(
-            UsuarioSucursal.IdUsuario == current_user.IdUsuarios,
-            UsuarioSucursal.IdCentro.isnot(None)
-        ).all()
-        centros_ids = [c[0] for c in centros_asignados]
-
-        if centros_ids:
-            # Obtener las zonas de esas sucursales
-            zonas = db.query(Sucursales.IdZona).filter(
-                Sucursales.IdCentro.in_(centros_ids)
-            ).distinct().all()
-            zona_ids = [z[0] for z in zonas]
-            # Filtrar sucursales por esas zonas
-            query = query.filter(Sucursales.IdZona.in_(zona_ids))
-
     sucursales = query.order_by(Sucursales.Sucursales).all()
     return [
         {
