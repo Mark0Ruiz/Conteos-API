@@ -2,21 +2,29 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { FiArrowLeft, FiPackage, FiUser, FiCalendar, FiShoppingBag, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi'
+import { FiArrowLeft, FiPackage, FiUser, FiCalendar, FiShoppingBag, FiCheckCircle, FiClock, FiDollarSign, FiSend, FiAlertCircle } from 'react-icons/fi'
 import { conteosAPI } from '@/lib/api'
 import { ConteoResponse, User } from '@/types/api'
 import { formatLocalDate } from '@/lib/dateUtils'
+import { useAuth } from '@/context/AuthContext'
+
+const NIVELES_CONTESTAR = new Set([1, 3, 4, 8])
 
 export default function VerConteo() {
   const router = useRouter()
   const params = useParams()
   const id = params.id as string
+  const { user } = useAuth()
   
   const [conteo, setConteo] = useState<ConteoResponse | null>(null)
   const [sucursalNombre, setSucursalNombre] = useState('')
   const [usuarioNombre, setUsuarioNombre] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [excistencias, setExcistencias] = useState<Record<string, number>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -29,6 +37,10 @@ export default function VerConteo() {
       setLoading(true)
       const data = await conteosAPI.getConteo(parseInt(id))
       setConteo(data)
+      // Inicializar mapa de existencias editables
+      const mapa: Record<string, number> = {}
+      data.detalles?.forEach((d: any) => { mapa[d.CodigoBarras] = d.NExcistencia })
+      setExcistencias(mapa)
 
       try {
         const [sucursales, usuarios] = await Promise.all([
@@ -73,17 +85,39 @@ export default function VerConteo() {
     )
   }
 
+  const puedeContestar = user && NIVELES_CONTESTAR.has(user.NivelUsuario) && conteo?.Envio === 0 && !submitted
+
+  const handleEnviar = async () => {
+    if (!conteo) return
+    setSubmitting(true)
+    setSubmitError('')
+    try {
+      const detalles = conteo.detalles.map(d => ({
+        CodigoBarras: d.CodigoBarras,
+        NExcistencia: excistencias[d.CodigoBarras] ?? d.NExcistencia
+      }))
+      await conteosAPI.contestarConteo(conteo.idConteo, { detalles })
+      setSubmitted(true)
+      setTimeout(() => router.push('/dashboard'), 1500)
+    } catch (err: any) {
+      setSubmitError(err.response?.data?.detail || 'Error al enviar el conteo')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   const calcularTotales = () => {
     if (!conteo?.detalles) return { totalProductos: 0, totalSistema: 0, totalFisico: 0, totalDiferencia: 0, totalValor: 0 }
     
     return conteo.detalles.reduce((acc, detalle) => {
-      const diferencia = detalle.NExcistencia - detalle.NSistema
-      const valorTotal = detalle.Precio * detalle.NExcistencia
+      const fisico = excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia
+      const diferencia = fisico - detalle.NSistema
+      const valorTotal = detalle.Precio * fisico
       
       return {
         totalProductos: acc.totalProductos + 1,
         totalSistema: acc.totalSistema + detalle.NSistema,
-        totalFisico: acc.totalFisico + detalle.NExcistencia,
+        totalFisico: acc.totalFisico + fisico,
         totalDiferencia: acc.totalDiferencia + diferencia,
         totalValor: acc.totalValor + valorTotal
       }
@@ -261,8 +295,9 @@ export default function VerConteo() {
           
           <div className="md:hidden p-4 space-y-3">
             {conteo.detalles?.map((detalle, index) => {
-              const diferencia = detalle.NExcistencia - detalle.NSistema
-              const valorTotal = detalle.Precio * detalle.NExcistencia
+              const fisico = excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia
+              const diferencia = fisico - detalle.NSistema
+              const valorTotal = detalle.Precio * fisico
 
               return (
                 <div key={index} className="border border-gray-200 rounded-lg p-4 shadow-sm">
@@ -283,7 +318,19 @@ export default function VerConteo() {
                     <p><span className="text-gray-500">#:</span> {index + 1}</p>
                     <p><span className="text-gray-500">Código:</span> {detalle.CodigoBarras}</p>
                     <p><span className="text-gray-500">Sistema:</span> {detalle.NSistema.toFixed(2)}</p>
-                    <p><span className="text-gray-500">Físicas:</span> {detalle.NExcistencia.toFixed(2)}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Físicas:</span>
+                      {puedeContestar ? (
+                        <input
+                          type="number" inputMode="decimal" step="0.01" min="0"
+                          className="w-24 border border-blue-300 rounded px-2 py-0.5 text-sm focus:ring-2 focus:ring-blue-500"
+                          value={excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia}
+                          onChange={e => setExcistencias(prev => ({ ...prev, [detalle.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
+                        />
+                      ) : (
+                        <span>{(excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia).toFixed(2)}</span>
+                      )}
+                    </div>
                     <p><span className="text-gray-500">Precio:</span> ${detalle.Precio.toFixed(2)}</p>
                     <p className="font-semibold text-green-600">Valor total: ${valorTotal.toFixed(2)}</p>
                   </div>
@@ -324,8 +371,9 @@ export default function VerConteo() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {conteo.detalles?.map((detalle, index) => {
-                  const diferencia = detalle.NExcistencia - detalle.NSistema
-                  const valorTotal = detalle.Precio * detalle.NExcistencia
+                  const fisico = excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia
+                  const diferencia = fisico - detalle.NSistema
+                  const valorTotal = detalle.Precio * fisico
                   
                   return (
                     <tr key={index} className="hover:bg-gray-50 transition-colors">
@@ -341,8 +389,17 @@ export default function VerConteo() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
                         {detalle.NSistema.toFixed(2)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
-                        {detalle.NExcistencia.toFixed(2)}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                        {puedeContestar ? (
+                          <input
+                            type="number" inputMode="decimal" step="0.01" min="0"
+                            className="w-24 border border-blue-300 rounded-lg px-2 py-1 text-sm text-right focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            value={excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia}
+                            onChange={e => setExcistencias(prev => ({ ...prev, [detalle.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
+                          />
+                        ) : (
+                          <span className="text-gray-700">{fisico.toFixed(2)}</span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
@@ -409,14 +466,34 @@ export default function VerConteo() {
           )}
         </div>
 
-        {/* Botón de acción */}
-        <div className="mt-6 flex justify-end">
+        {/* Botones de acción */}
+        {submitError && (
+          <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-sm text-red-700">
+            <FiAlertCircle className="w-4 h-4 flex-shrink-0" />{submitError}
+          </div>
+        )}
+        {submitted && (
+          <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2 text-sm text-green-700">
+            <FiCheckCircle className="w-4 h-4 flex-shrink-0" />Conteo enviado correctamente. Redirigiendo...
+          </div>
+        )}
+        <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
           <button
             onClick={() => router.back()}
             className="w-full sm:w-auto px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
           >
             Cerrar
           </button>
+          {puedeContestar && (
+            <button
+              onClick={handleEnviar}
+              disabled={submitting}
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              <FiSend className="w-4 h-4" />
+              {submitting ? 'Enviando...' : 'Enviar Conteo'}
+            </button>
+          )}
         </div>
       </div>
     </div>
