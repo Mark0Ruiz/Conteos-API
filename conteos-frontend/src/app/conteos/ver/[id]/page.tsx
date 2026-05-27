@@ -107,21 +107,23 @@ export default function VerConteo() {
   }
 
   const calcularTotales = () => {
-    if (!conteo?.detalles) return { totalProductos: 0, totalSistema: 0, totalFisico: 0, totalDiferencia: 0, totalValor: 0 }
+    if (!conteo?.detalles) return { totalProductos: 0, totalSistema: 0, totalFisico: 0, totalDiferencia: 0, totalValor: 0, valorFaltante: 0 }
     
     return conteo.detalles.reduce((acc, detalle) => {
       const fisico = excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia
       const diferencia = fisico - detalle.NSistema
       const valorTotal = detalle.Precio * fisico
+      const faltante = diferencia < 0 ? Math.abs(diferencia) * detalle.Precio : 0
       
       return {
         totalProductos: acc.totalProductos + 1,
         totalSistema: acc.totalSistema + detalle.NSistema,
         totalFisico: acc.totalFisico + fisico,
         totalDiferencia: acc.totalDiferencia + diferencia,
-        totalValor: acc.totalValor + valorTotal
+        totalValor: acc.totalValor + valorTotal,
+        valorFaltante: acc.valorFaltante + faltante
       }
-    }, { totalProductos: 0, totalSistema: 0, totalFisico: 0, totalDiferencia: 0, totalValor: 0 })
+    }, { totalProductos: 0, totalSistema: 0, totalFisico: 0, totalDiferencia: 0, totalValor: 0, valorFaltante: 0 })
   }
 
   if (loading) {
@@ -221,7 +223,7 @@ export default function VerConteo() {
         </div>
 
         {/* Resumen de Totales */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <div className="flex items-center justify-between">
               <div>
@@ -283,6 +285,22 @@ export default function VerConteo() {
                 <p className="text-2xl font-bold text-green-600">${totales.totalValor.toFixed(2)}</p>
               </div>
               <FiDollarSign className="w-8 h-8 text-green-500" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-red-100 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Valor Faltante</p>
+                <p className={`text-2xl font-bold ${totales.valorFaltante > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  ${totales.valorFaltante.toFixed(2)}
+                </p>
+              </div>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                totales.valorFaltante > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'
+              }`}>
+                <FiDollarSign className="w-5 h-5" />
+              </div>
             </div>
           </div>
         </div>
