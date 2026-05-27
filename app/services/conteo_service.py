@@ -305,6 +305,7 @@ class ConteoService:
         # Marcar el conteo como finalizado y contestado
         conteo.Envio = 1
         conteo.Estatus = 1
+        conteo.IdUsuario = user_id  # Registrar quién realizó el conteo
         
         db.commit()
         db.refresh(conteo)

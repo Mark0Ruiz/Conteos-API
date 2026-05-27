@@ -383,7 +383,7 @@ export function ConteosClient() {
                   </div>
                   <div className="flex items-center">
                     <FiUser className="w-4 h-4 mr-2 text-gray-400" />
-                    <span>Usuario: {formatUsuario(conteo.IdUsuario)}</span>
+                    <span>Realizó: {formatUsuario(conteo.IdUsuario)}</span>
                   </div>
                   <div className="flex items-center">
                     <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
@@ -423,7 +423,7 @@ export function ConteosClient() {
                     Centro
                   </th>
                   <th className="px-6 py-3 min-w-[240px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Usuario
+                    Realizó
                   </th>
                   <th className="px-6 py-3 min-w-[140px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha

@@ -200,9 +200,9 @@ export default function VerConteo() {
                   <FiUser className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Usuario</p>
+                  <p className="text-sm text-gray-600">Realizó el conteo</p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {conteo.IdUsuario}{usuarioNombre ? ` - ${usuarioNombre}` : ''}
+                    {usuarioNombre || (conteo.IdUsuario ? `Usuario #${conteo.IdUsuario}` : 'Sin registrar')}
                   </p>
                 </div>
               </div>
