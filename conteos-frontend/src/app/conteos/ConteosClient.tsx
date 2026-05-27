@@ -6,10 +6,12 @@ import { FiFilter, FiSearch, FiCalendar, FiUser, FiPackage, FiEdit, FiEye } from
 import { conteosAPI } from '@/lib/api'
 import { ConteoResponse, User } from '@/types/api'
 import { formatShortDate } from '@/lib/dateUtils'
+import { useAuth } from '@/context/AuthContext'
 
 export function ConteosClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { user, selectedSucursal } = useAuth()
   const [conteos, setConteos] = useState<ConteoResponse[]>([])
   const [sucursalesMap, setSucursalesMap] = useState<Record<string, string>>({})
   const [usuariosMap, setUsuariosMap] = useState<Record<number, string>>({})
@@ -48,8 +50,10 @@ export function ConteosClient() {
   const loadConteos = async () => {
     try {
       setLoading(true)
+      // Para NivelUsuario=4 (APP), filtrar por la sucursal seleccionada al login
+      const idCentroFiltro = user?.NivelUsuario === 4 ? selectedSucursal?.IdCentro : undefined
       const [data, sucursales, usuarios] = await Promise.all([
-        conteosAPI.getConteos(),
+        conteosAPI.getConteos(idCentroFiltro),
         conteosAPI.getSucursales(),
         conteosAPI.getUsuarios()
       ])

@@ -27,7 +27,8 @@ USER_ROLES = {
 }
 
 # Niveles con acceso restringido: solo ven sucursales asignadas (usuariossucursal)
-NIVELES_SUCURSALES_RESTRINGIDAS = {2, 4}
+# Nota: nivel 4 (APP) selecciona su sucursal al login, no usa restricción por tabla
+NIVELES_SUCURSALES_RESTRINGIDAS = {2}
 
 # Permisos por acción
 NIVELES_CONTESTAR  = {1, 3, 4, 8}   # Admin, Monitorista CCTV, APP, Supervisión CCTV

@@ -34,8 +34,10 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
+      // Para NivelUsuario=4 (APP), filtrar por la sucursal seleccionada al login
+      const idCentroFiltro = user?.NivelUsuario === 4 ? selectedSucursal?.IdCentro : undefined
       const [conteos, sucursales, usuarios] = await Promise.all([
-        conteosAPI.getConteos(),
+        conteosAPI.getConteos(idCentroFiltro),
         conteosAPI.getSucursales(),
         conteosAPI.getUsuarios()
       ])

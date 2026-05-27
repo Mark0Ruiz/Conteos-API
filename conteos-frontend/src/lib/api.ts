@@ -59,9 +59,11 @@ export const conteosAPI = {
     const response = await api.get('/api/v1/conteos/sucursales')
     return response.data
   },
-  // Obtener todos los conteos
-  getConteos: async () => {
-    const response = await api.get('/api/v1/conteos/?limit=1000')
+  // Obtener todos los conteos (con filtro opcional por sucursal)
+  getConteos: async (idCentro?: string) => {
+    const params = new URLSearchParams({ limit: '1000' })
+    if (idCentro) params.set('id_centro', idCentro)
+    const response = await api.get(`/api/v1/conteos/?${params.toString()}`)
     return response.data
   },
 
