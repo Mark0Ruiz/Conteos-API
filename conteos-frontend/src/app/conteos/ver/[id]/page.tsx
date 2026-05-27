@@ -325,6 +325,7 @@ export default function VerConteo() {
                           type="number" inputMode="decimal" step="0.01" min="0"
                           className="w-24 border border-blue-300 rounded px-2 py-0.5 text-sm focus:ring-2 focus:ring-blue-500"
                           value={excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia}
+                          onFocus={e => e.target.select()}
                           onChange={e => setExcistencias(prev => ({ ...prev, [detalle.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
                         />
                       ) : (
@@ -395,6 +396,7 @@ export default function VerConteo() {
                             type="number" inputMode="decimal" step="0.01" min="0"
                             className="w-24 border border-blue-300 rounded-lg px-2 py-1 text-sm text-right focus:ring-2 focus:ring-blue-500 focus:outline-none"
                             value={excistencias[detalle.CodigoBarras] ?? detalle.NExcistencia}
+                            onFocus={e => e.target.select()}
                             onChange={e => setExcistencias(prev => ({ ...prev, [detalle.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
                           />
                         ) : (
