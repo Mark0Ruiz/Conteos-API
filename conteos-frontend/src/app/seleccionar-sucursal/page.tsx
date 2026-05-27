@@ -35,9 +35,7 @@ export default function SeleccionarSucursal() {
   const loadSucursales = async () => {
     try {
       const data = await conteosAPI.getSucursales()
-      // Solo mostrar sucursales de tipo 'T'
-      const tipoT = data.filter((s: Sucursal) => s.IdTipoSucursal === 'T')
-      setSucursales(tipoT)
+      setSucursales(data)
     } catch {
       setError('Error al cargar las sucursales')
     } finally {
