@@ -177,6 +177,7 @@ export default function ValidarConteo() {
                         min="0"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
                         value={nsistema[d.CodigoBarras] ?? ''}
+                        onFocus={() => { if (nsistema[d.CodigoBarras] === 0) setNsistema(prev => { const n = {...prev}; delete n[d.CodigoBarras]; return n }) }}
                         onChange={(e) => setNsistema(prev => ({ ...prev, [d.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
                       />
                     </div>
@@ -212,6 +213,7 @@ export default function ValidarConteo() {
                           min="0"
                           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm text-right"
                           value={nsistema[d.CodigoBarras] ?? ''}
+                          onFocus={() => { if (nsistema[d.CodigoBarras] === 0) setNsistema(prev => { const n = {...prev}; delete n[d.CodigoBarras]; return n }) }}
                           onChange={(e) => setNsistema(prev => ({ ...prev, [d.CodigoBarras]: parseFloat(e.target.value) || 0 }))}
                         />
                       </td>

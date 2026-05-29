@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 from enum import Enum
 
@@ -93,6 +93,7 @@ class ConteoValidar(BaseModel):
 class ConteoResponse(BaseModel):
     idConteo: int
     Fechal: date
+    FechaHora: Optional[datetime] = None
     Envio: int
     IdRealizo: int
     IdCentro: str
@@ -106,6 +107,7 @@ class ConteoResponse(BaseModel):
 class ConteoListResponse(BaseModel):
     idConteo: int
     Fechal: date
+    FechaHora: Optional[datetime] = None
     Envio: int
     IdRealizo: int
     IdCentro: str

@@ -14,6 +14,21 @@ try:
 except Exception as e:
     print(f"[WARNING] No se pudieron crear las tablas: {e}")
 
+# Migración: agregar columna FechaHora si no existe
+try:
+    from sqlalchemy import text
+    with engine.connect() as _conn:
+        _res = _conn.execute(text(
+            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
+            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'conteo' AND COLUMN_NAME = 'FechaHora'"
+        ))
+        if _res.scalar() == 0:
+            _conn.execute(text("ALTER TABLE conteo ADD COLUMN FechaHora DATETIME NULL"))
+            _conn.commit()
+            print("[INFO] Columna FechaHora agregada a la tabla conteo")
+except Exception as _e:
+    print(f"[WARNING] No se pudo ejecutar migración FechaHora: {_e}")
+
 app = FastAPI(
     title="API Conteos SCISP",
     description="API para el sistema de conteos de productos en sucursales",

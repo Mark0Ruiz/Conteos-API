@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -45,6 +45,7 @@ class ConteoService:
         # Crear el conteo principal
         nuevo_conteo = Conteo(
             Fechal=date.today(),
+            FechaHora=datetime.now(),
             Envio=1,  # Por defecto finalizado al crear
             IdRealizo=user_id,
             IdCentro=conteo_data.IdCentro,
@@ -129,6 +130,7 @@ class ConteoService:
         # Crear el conteo asignado
         nuevo_conteo = Conteo(
             Fechal=fecha_conteo,
+            FechaHora=datetime.now(),
             Envio=0,  # Pendiente porque se asigna
             IdRealizo=user_id,
             IdCentro=conteo_data.IdCentro,
@@ -443,6 +445,7 @@ class ConteoService:
             result.append(ConteoListResponse(
                 idConteo=conteo.idConteo,
                 Fechal=conteo.Fechal,
+                FechaHora=conteo.FechaHora,
                 Envio=conteo.Envio,
                 IdRealizo=conteo.IdRealizo,
                 IdCentro=conteo.IdCentro,
@@ -485,6 +488,7 @@ class ConteoService:
         return ConteoResponse(
             idConteo=conteo.idConteo,
             Fechal=conteo.Fechal,
+            FechaHora=conteo.FechaHora,
             Envio=conteo.Envio,
             IdRealizo=conteo.IdRealizo,
             IdCentro=conteo.IdCentro,

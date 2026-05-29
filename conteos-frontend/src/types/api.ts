@@ -46,6 +46,7 @@ export interface ConteoAsignar {
 export interface ConteoResponse {
   idConteo: number;
   Fechal: string;
+  FechaHora?: string | null;
   Envio: number;
   IdRealizo: number;
   IdCentro: string;
@@ -57,6 +58,7 @@ export interface ConteoResponse {
 export interface ConteoListResponse {
   idConteo: number;
   Fechal: string;
+  FechaHora?: string | null;
   Envio: number;
   IdRealizo: number;
   IdCentro: string;

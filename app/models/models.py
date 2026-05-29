@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Float, ForeignKey, SmallInteger
+from sqlalchemy import Column, Integer, String, Date, DateTime, Float, ForeignKey, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -132,6 +132,7 @@ class Conteo(Base):
     
     idConteo = Column(Integer, primary_key=True, autoincrement=True)
     Fechal = Column(Date, nullable=False)
+    FechaHora = Column(DateTime, nullable=True)
     Envio = Column(SmallInteger, nullable=False)
     IdRealizo = Column(Integer, ForeignKey("usuarios.IdUsuarios"), nullable=False)
     IdCentro = Column(String(4), ForeignKey("sucursales.IdCentro"), nullable=False)

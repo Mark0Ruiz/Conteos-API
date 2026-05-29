@@ -23,6 +23,18 @@ export const formatLocalDate = (dateString: string): string => {
 }
 
 /**
+ * Extrae y formatea la hora de una cadena ISO (HH:MM)
+ */
+export const formatTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return ''
+  // If it has a T part with time info
+  const tIndex = dateString.indexOf('T')
+  if (tIndex === -1) return ''
+  const timePart = dateString.substring(tIndex + 1, tIndex + 6) // HH:MM
+  return timePart
+}
+
+/**
  * Convierte una fecha del servidor a formato corto (DD/MM/YYYY)
  */
 export const formatShortDate = (dateString: string): string => {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { FiPlus, FiUser, FiEdit, FiClipboard, FiBarChart, FiUsers, FiPackage, FiLogOut, FiCalendar, FiList, FiAlertCircle, FiCheckCircle, FiTrendingUp, FiClock, FiBox, FiMapPin, FiSmartphone } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
 import { conteosAPI } from '@/lib/api'
-import { formatShortDate } from '@/lib/dateUtils'
+import { formatShortDate, formatTime } from '@/lib/dateUtils'
 import { ConteoListResponse, User } from '@/types/api'
 
 export default function Dashboard() {
@@ -22,7 +22,7 @@ export default function Dashboard() {
   const [allConteos, setAllConteos] = useState<ConteoListResponse[]>([])
   const [filtroEstatus, setFiltroEstatus] = useState<number | null>(null)
   const [sucursalesMap, setSucursalesMap] = useState<Record<string, string>>({})
-  const [usuariosMap, setUsuariosMap] = useState<Record<number, string>>({})
+  const [usuariosInfoMap, setUsuariosInfoMap] = useState<Record<number, {nombre: string, nivel: number}>>({})
   const [loading, setLoading] = useState(true)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
@@ -49,12 +49,12 @@ export default function Dashboard() {
 
       setSucursalesMap(sucursalesLookup)
 
-      const usuariosLookup = usuarios.reduce((acc: Record<number, string>, usuario: User) => {
-        acc[usuario.IdUsuarios] = usuario.NombreUsuario
+      const usuariosLookup = usuarios.reduce((acc: Record<number, {nombre: string, nivel: number}>, usuario: User) => {
+        acc[usuario.IdUsuarios] = { nombre: usuario.NombreUsuario, nivel: usuario.NivelUsuario }
         return acc
       }, {})
 
-      setUsuariosMap(usuariosLookup)
+      setUsuariosInfoMap(usuariosLookup)
       
       // Ordenar conteos por ID descendente (más recientes primero)
       const conteosOrdenados = [...conteos].sort((a: any, b: any) => b.idConteo - a.idConteo)
@@ -99,8 +99,20 @@ export default function Dashboard() {
 
   const formatUsuario = (idUsuario: number | null) => {
     if (idUsuario === null || idUsuario === undefined) return 'Sin asignar'
-    const nombreUsuario = usuariosMap[idUsuario]
-    return nombreUsuario ? `${idUsuario} - ${nombreUsuario}` : idUsuario.toString()
+    const info = usuariosInfoMap[idUsuario]
+    return info ? info.nombre : idUsuario.toString()
+  }
+
+  const getAppPerformer = (conteo: any): string | null => {
+    // Quien realizó físicamente el conteo: primero IdRealizo si es nivel 4
+    const realizoInfo = usuariosInfoMap[conteo.IdRealizo]
+    if (realizoInfo?.nivel === 4) return realizoInfo.nombre
+    // Si IdUsuario es nivel 4 (asignado)
+    if (conteo.IdUsuario !== null && conteo.IdUsuario !== undefined) {
+      const asignadoInfo = usuariosInfoMap[conteo.IdUsuario]
+      if (asignadoInfo?.nivel === 4) return asignadoInfo.nombre
+    }
+    return null
   }
 
   // Función para calcular tiempo transcurrido
@@ -417,8 +429,17 @@ export default function Dashboard() {
                 </div>
                 <div className="mt-3 space-y-1 text-sm text-gray-700">
                   <p><span className="text-gray-500">Centro:</span> {formatSucursal(conteo.IdCentro)}</p>
-                  <p><span className="text-gray-500">Usuario:</span> {formatUsuario(conteo.IdUsuario)}</p>
-                  <p><span className="text-gray-500">Fecha:</span> {formatShortDate(conteo.Fechal)}</p>
+                  {(() => {
+                    const app = getAppPerformer(conteo)
+                    return app ? (
+                      <p><span className="text-gray-500">APP:</span> <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium"><FiSmartphone className="w-3 h-3" />{app}</span></p>
+                    ) : null
+                  })()}
+                  <p><span className="text-gray-500">Asignado:</span> {formatUsuario(conteo.IdUsuario)}</p>
+                  <p>
+                    <span className="text-gray-500">Fecha:</span> {formatShortDate(conteo.Fechal)}
+                    {conteo.FechaHora && <span className="ml-2 text-gray-500"><FiClock className="inline w-3 h-3 mr-1" />{formatTime(conteo.FechaHora)}</span>}
+                  </p>
                   <p><span className="text-gray-500">Productos:</span> {conteo.total_productos || 0}</p>
                 </div>
               </div>
@@ -442,11 +463,14 @@ export default function Dashboard() {
                   <th className="px-6 py-3 min-w-[220px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Centro
                   </th>
-                  <th className="px-6 py-3 min-w-[240px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 min-w-[180px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    APP (Capturó)
+                  </th>
+                  <th className="px-6 py-3 min-w-[200px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Usuario Asignado
                   </th>
-                  <th className="px-6 py-3 min-w-[140px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Fecha
+                  <th className="px-6 py-3 min-w-[160px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha y Hora
                   </th>
                   <th className="px-6 py-3 min-w-[140px] whitespace-nowrap text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
@@ -465,13 +489,29 @@ export default function Dashboard() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatSucursal(conteo.IdCentro)}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {(() => {
+                        const app = getAppPerformer(conteo)
+                        return app
+                          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 text-xs font-medium"><FiSmartphone className="w-3 h-3" />{app}</span>
+                          : <span className="text-gray-400">—</span>
+                      })()}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {formatUsuario(conteo.IdUsuario)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center">
-                        <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
-                        {formatShortDate(conteo.Fechal)}
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center">
+                          <FiCalendar className="w-4 h-4 mr-2 text-gray-400" />
+                          {formatShortDate(conteo.Fechal)}
+                        </div>
+                        {conteo.FechaHora && (
+                          <div className="flex items-center text-xs text-gray-500">
+                            <FiClock className="w-3 h-3 mr-2 text-gray-400" />
+                            {formatTime(conteo.FechaHora)}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
