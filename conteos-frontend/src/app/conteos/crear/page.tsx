@@ -64,6 +64,9 @@ export default function CrearConteo() {
     if (!productoActual.CodigoBarras) {
       errors.CodigoBarras = 'Debes ingresar un código de barras'
     }
+    if (productoActual.NSistema === 0) {
+      errors.NSistema = 'Debes capturar las existencias en sistema'
+    }
     if (productoActual.NExcistencia === 0) {
       errors.NExcistencia = 'Debes capturar las existencias físicas para continuar'
     }
@@ -397,7 +400,7 @@ export default function CrearConteo() {
                           fieldErrors.NSistema ? 'border-red-300 bg-red-50' : 'border-gray-300'
                         }`}
                         placeholder="0"
-                        value={productoActual.NSistema === 0 ? '' : productoActual.NSistema}
+                        value={productoActual.NSistema || ''}
                         onChange={(e) => {
                           setProductoActual({ ...productoActual, NSistema: parseFloat(e.target.value) || 0 })
                           setFieldErrors({ ...fieldErrors, NSistema: '' })
