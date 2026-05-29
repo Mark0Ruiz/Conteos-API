@@ -58,13 +58,15 @@ export default function CrearConteo() {
     }
   }
 
+  const isNivel4 = user?.NivelUsuario === 4
+
   const agregarProducto = async () => {
     const errors: { [key: string]: string } = {}
     
     if (!productoActual.CodigoBarras) {
       errors.CodigoBarras = 'Debes ingresar un código de barras'
     }
-    if (productoActual.NSistema === 0) {
+    if (!isNivel4 && productoActual.NSistema === 0) {
       errors.NSistema = 'Debes capturar las existencias en sistema'
     }
     if (productoActual.NExcistencia === 0) {
@@ -229,7 +231,9 @@ export default function CrearConteo() {
           </button>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Crear Conteo</h1>
           <p className="mt-2 text-gray-600">
-            Sigue los pasos para registrar un nuevo conteo de productos
+            {isNivel4
+              ? 'Captura las existencias físicas — un monitorista validará las existencias en sistema'
+              : 'Sigue los pasos para registrar un nuevo conteo de productos'}
           </p>
         </div>
 
@@ -323,7 +327,9 @@ export default function CrearConteo() {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900">Productos a Contar</h2>
-                  <p className="text-sm text-gray-600">Escanea o agrega productos manualmente</p>
+                  <p className="text-sm text-gray-600">
+                    {isNivel4 ? 'Captura solo existencias físicas (sistema se valida después)' : 'Escanea o agrega productos manualmente'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -387,6 +393,7 @@ export default function CrearConteo() {
                   
                   {/* Existencias */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {!isNivel4 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Existencias Sistema <span className="text-red-500">*</span>
@@ -414,8 +421,9 @@ export default function CrearConteo() {
                         </p>
                       )}
                     </div>
+                    )}
                     
-                    <div>
+                    <div className={isNivel4 ? 'md:col-span-2' : ''}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Existencias Físicas <span className="text-red-500">*</span>
                       </label>
@@ -484,8 +492,8 @@ export default function CrearConteo() {
                     )}
                   </div>
                   
-                  {/* Diferencia automática */}
-                  {(productoActual.NSistema > 0 || productoActual.NExcistencia > 0) && (
+                  {/* Diferencia automática — solo visible si no es nivel 4 */}
+                  {!isNivel4 && (productoActual.NSistema > 0 || productoActual.NExcistencia > 0) && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">Diferencia</span>
@@ -544,7 +552,7 @@ export default function CrearConteo() {
 
                           <div className="mt-2 space-y-1 text-sm text-gray-700">
                             <p><span className="text-gray-500">Código:</span> {producto.CodigoBarras}</p>
-                            <p><span className="text-gray-500">Sistema:</span> {producto.NSistema.toFixed(2)}</p>
+                            {!isNivel4 && <p><span className="text-gray-500">Sistema:</span> {producto.NSistema.toFixed(2)}</p>}
                             <p><span className="text-gray-500">Físico:</span> {producto.NExcistencia.toFixed(2)}</p>
                             <p><span className="text-gray-500">Precio:</span> ${producto.Precio.toFixed(2)}</p>
                           </div>
@@ -576,10 +584,10 @@ export default function CrearConteo() {
                         <tr>
                           <th className="px-4 py-3 text-left font-medium">Producto</th>
                           <th className="px-4 py-3 text-left font-medium">Código</th>
-                          <th className="px-4 py-3 text-right font-medium">Sistema</th>
+                          {!isNivel4 && <th className="px-4 py-3 text-right font-medium">Sistema</th>}
                           <th className="px-4 py-3 text-right font-medium">Físico</th>
                           <th className="px-4 py-3 text-right font-medium">Precio</th>
-                          <th className="px-4 py-3 text-right font-medium">Diferencia</th>
+                          {!isNivel4 && <th className="px-4 py-3 text-right font-medium">Diferencia</th>}
                           <th className="px-4 py-3 text-center font-medium">Opciones</th>
                         </tr>
                       </thead>
@@ -594,15 +602,18 @@ export default function CrearConteo() {
                               <td className="px-4 py-3 text-sm text-gray-700">
                                 {producto.CodigoBarras}
                               </td>
+                              {!isNivel4 && (
                               <td className="px-4 py-3 text-sm text-gray-700 text-right">
                                 {producto.NSistema.toFixed(2)}
                               </td>
+                              )}
                               <td className="px-4 py-3 text-sm text-gray-700 text-right">
                                 {producto.NExcistencia.toFixed(2)}
                               </td>
                               <td className="px-4 py-3 text-sm text-gray-700 text-right">
                                 ${producto.Precio.toFixed(2)}
                               </td>
+                              {!isNivel4 && (
                               <td className="px-4 py-3 text-sm font-semibold text-right">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                                   diferencia === 0
@@ -614,6 +625,7 @@ export default function CrearConteo() {
                                   {diferencia > 0 ? '+' : ''}{diferencia.toFixed(2)}
                                 </span>
                               </td>
+                              )}
                               <td className="px-4 py-3 text-center">
                                 <div className="flex items-center justify-center gap-2">
                                   <button

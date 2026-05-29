@@ -82,6 +82,14 @@ class ConteoContestar(BaseModel):
     """Schema para contestar un conteo (modificar existencias físicas)"""
     detalles: List[ConteoDetalleUpdate] = Field(..., description="Lista de actualizaciones de existencias")
 
+class ConteoValidarDetalle(BaseModel):
+    CodigoBarras: str = Field(..., description="Código de barras del producto")
+    NSistema: float = Field(..., description="Existencias en sistema (según inventario)")
+
+class ConteoValidar(BaseModel):
+    """Schema para validar un conteo (nivel 3 llena existencias sistema)"""
+    detalles: List[ConteoValidarDetalle] = Field(..., description="Lista de existencias sistema por producto")
+
 class ConteoResponse(BaseModel):
     idConteo: int
     Fechal: date

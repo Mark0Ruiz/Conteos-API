@@ -11,7 +11,7 @@ from app.core.security import (
     get_allowed_centros,
 )
 from app.schemas.schemas import (
-    ConteoCreate, ConteoAsignar, ConteoEdit, ConteoContestar,
+    ConteoCreate, ConteoAsignar, ConteoEdit, ConteoContestar, ConteoValidar,
     ConteoResponse, ConteoListResponse, SuccessResponse
 )
 from app.services.conteo_service import ConteoService
@@ -52,7 +52,7 @@ async def crear_conteo(
 
     **Roles permitidos**: todos los autenticados.
     """
-    return ConteoService.crear_conteo(db, conteo_data, current_user.IdUsuarios)
+    return ConteoService.crear_conteo(db, conteo_data, current_user.IdUsuarios, current_user.NivelUsuario)
 
 @router.post("/asignar", response_model=ConteoResponse, status_code=status.HTTP_201_CREATED)
 async def asignar_conteo(
@@ -97,6 +97,25 @@ async def contestar_conteo(
     Monitorista CCTV y Admin CCTV no pueden contestar.
     """
     return ConteoService.contestar_conteo(db, conteo_id, conteo_data, current_user.IdUsuarios)
+
+@router.put("/{conteo_id}/validar", response_model=ConteoResponse)
+async def validar_conteo(
+    conteo_id: int,
+    conteo_data: ConteoValidar,
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(require_any_user)
+):
+    """
+    Validar un conteo: llenar existencias sistema y marcar como validado.
+
+    **Roles permitidos**: Admin (1), Monitorista CCTV (3), Admin CCTV (7), Supervisión CCTV (8).
+    APP (4) no puede validar.
+    """
+    NIVELES_VALIDAR = {1, 3, 7, 8}
+    if current_user.NivelUsuario not in NIVELES_VALIDAR:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tienes permiso para validar conteos")
+    return ConteoService.validar_conteo(db, conteo_id, conteo_data, current_user.IdUsuarios)
 
 @router.delete("/{conteo_id}", response_model=SuccessResponse)
 async def eliminar_conteo(

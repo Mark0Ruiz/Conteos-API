@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { FiArrowLeft, FiPackage, FiUser, FiCalendar, FiShoppingBag, FiCheckCircle, FiClock, FiDollarSign, FiSend, FiAlertCircle } from 'react-icons/fi'
+import { FiArrowLeft, FiPackage, FiUser, FiCalendar, FiShoppingBag, FiCheckCircle, FiClock, FiDollarSign, FiSend, FiAlertCircle, FiShield } from 'react-icons/fi'
 import { conteosAPI } from '@/lib/api'
 import { ConteoResponse, User } from '@/types/api'
 import { formatLocalDate } from '@/lib/dateUtils'
 import { useAuth } from '@/context/AuthContext'
 
 const NIVELES_CONTESTAR = new Set([1, 3, 4, 8])
+const NIVELES_VALIDAR = new Set([1, 3, 7, 8])
 
 export default function VerConteo() {
   const router = useRouter()
@@ -68,7 +69,7 @@ export default function VerConteo() {
     }
   }
 
-  const getStatusBadge = (envio: number) => {
+  const getStatusBadge = (envio: number, estatus?: number) => {
     if (envio === 0) {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800">
@@ -77,15 +78,24 @@ export default function VerConteo() {
         </span>
       )
     }
+    if (envio === 1 && estatus === 0) {
+      return (
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
+          <FiAlertCircle className="w-4 h-4 mr-1" />
+          Sin Validar
+        </span>
+      )
+    }
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
         <FiCheckCircle className="w-4 h-4 mr-1" />
-        Finalizado
+        Validado
       </span>
     )
   }
 
   const puedeContestar = user && NIVELES_CONTESTAR.has(user.NivelUsuario) && conteo?.Envio === 0 && !submitted
+  const puedeValidar = user && NIVELES_VALIDAR.has(user.NivelUsuario) && conteo?.Envio === 1 && conteo?.Estatus === 0
 
   const handleEnviar = async () => {
     if (!conteo) return
@@ -172,7 +182,7 @@ export default function VerConteo() {
                 Información completa del conteo y productos registrados
               </p>
             </div>
-            {getStatusBadge(conteo.Envio)}
+            {getStatusBadge(conteo.Envio, conteo.Estatus)}
           </div>
         </div>
 
@@ -512,6 +522,15 @@ export default function VerConteo() {
             >
               <FiSend className="w-4 h-4" />
               {submitting ? 'Enviando...' : 'Enviar Conteo'}
+            </button>
+          )}
+          {puedeValidar && (
+            <button
+              onClick={() => router.push(`/conteos/validar/${conteo.idConteo}`)}
+              className="w-full sm:w-auto px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium flex items-center justify-center gap-2"
+            >
+              <FiShield className="w-4 h-4" />
+              Validar Conteo
             </button>
           )}
         </div>

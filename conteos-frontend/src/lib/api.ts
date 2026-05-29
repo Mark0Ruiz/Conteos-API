@@ -113,6 +113,12 @@ export const conteosAPI = {
     return response.data
   },
 
+  // Validar conteo (nivel 3 llena NSistema)
+  validarConteo: async (id: number, detalles: { CodigoBarras: string; NSistema: number }[]) => {
+    const response = await api.put(`/api/v1/conteos/${id}/validar`, { detalles })
+    return response.data
+  },
+
   // Eliminar conteo (solo admin)
   deleteConteo: async (id: number) => {
     const response = await api.delete(`/api/v1/conteos/${id}`)

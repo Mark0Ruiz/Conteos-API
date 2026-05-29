@@ -5,7 +5,7 @@ from sqlalchemy import and_
 from fastapi import HTTPException, status
 from app.models.models import Conteo, ConteoDetalles, Usuarios, Sucursales, Catalogo
 from app.schemas.schemas import (
-    ConteoCreate, ConteoAsignar, ConteoEdit, ConteoContestar,
+    ConteoCreate, ConteoAsignar, ConteoEdit, ConteoContestar, ConteoValidar,
     ConteoResponse, ConteoListResponse, ConteoDetalleCreate
 )
 
@@ -15,7 +15,8 @@ class ConteoService:
     def crear_conteo(
         db: Session,
         conteo_data: ConteoCreate,
-        user_id: int
+        user_id: int,
+        user_nivel: int = 0
     ) -> ConteoResponse:
         """Crear un nuevo conteo"""
         
@@ -55,11 +56,13 @@ class ConteoService:
         db.flush()  # Para obtener el ID
         
         # Crear los detalles del conteo
+        # Si el usuario es nivel 4 (APP), NSistema siempre es 0 (lo valida nivel 3 después)
+        forzar_nsistema_cero = (user_nivel == 4)
         for detalle in conteo_data.detalles:
             nuevo_detalle = ConteoDetalles(
                 IdConteo=nuevo_conteo.idConteo,
                 CodigoBarras=detalle.CodigoBarras,
-                NSistema=detalle.NSistema,
+                NSistema=0.0 if forzar_nsistema_cero else detalle.NSistema,
                 NExcistencia=detalle.NExcistencia,
                 Precio=detalle.Precio
             )
@@ -312,6 +315,48 @@ class ConteoService:
         
         return ConteoService._build_conteo_response(db, conteo)
     
+    @staticmethod
+    def validar_conteo(
+        db: Session,
+        conteo_id: int,
+        conteo_data: ConteoValidar,
+        user_id: int
+    ) -> ConteoResponse:
+        """Validar un conteo: nivel 3 llena las existencias sistema y lo marca como validado"""
+
+        conteo = db.query(Conteo).filter(Conteo.idConteo == conteo_id).first()
+        if not conteo:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conteo no encontrado"
+            )
+
+        # Solo se puede validar un conteo sin validar (Envio=1, Estatus=0)
+        if conteo.Envio != 1 or conteo.Estatus != 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Solo se pueden validar conteos en estado 'Sin Validar'"
+            )
+
+        # Actualizar NSistema por código de barras
+        for detalle_update in conteo_data.detalles:
+            detalle = db.query(ConteoDetalles).filter(
+                and_(
+                    ConteoDetalles.IdConteo == conteo_id,
+                    ConteoDetalles.CodigoBarras == detalle_update.CodigoBarras
+                )
+            ).first()
+            if detalle:
+                detalle.NSistema = detalle_update.NSistema
+
+        # Marcar como validado
+        conteo.Estatus = 1
+
+        db.commit()
+        db.refresh(conteo)
+
+        return ConteoService._build_conteo_response(db, conteo)
+
     @staticmethod
     def eliminar_conteo(db: Session, conteo_id: int, user_id: int) -> dict:
         """Eliminar un conteo (solo administradores)"""
