@@ -143,6 +143,7 @@ export default function SucursalPage() {
               <p className="text-xs text-gray-500">Registrar conteo</p>
             </div>
           </button>
+          {user?.NivelUsuario !== 4 && (
           <button
             onClick={() => router.push('/conteos/asignar')}
             className="flex items-center gap-3 bg-white border border-gray-200 rounded-xl p-4 hover:bg-green-50 hover:border-green-300 transition-colors text-left shadow-sm"
@@ -155,6 +156,7 @@ export default function SucursalPage() {
               <p className="text-xs text-gray-500">A un usuario</p>
             </div>
           </button>
+          )}
         </div>
 
         {/* Tabs de filtro */}

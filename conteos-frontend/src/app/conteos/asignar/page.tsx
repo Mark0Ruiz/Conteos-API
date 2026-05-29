@@ -44,14 +44,10 @@ export default function AsignarConteo() {
 
   useEffect(() => {
     if (user?.NivelUsuario === 4) {
-      if (!selectedSucursal) {
-        router.push('/seleccionar-sucursal')
-        return
-      }
-      setFormData(prev => ({ ...prev, IdCentro: selectedSucursal.IdCentro }))
-    } else {
-      loadSucursales()
+      router.replace('/dashboard')
+      return
     }
+    loadSucursales()
   }, [selectedSucursal, user])
 
   const loadSucursales = async () => {
