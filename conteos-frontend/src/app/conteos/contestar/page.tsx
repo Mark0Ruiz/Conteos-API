@@ -280,7 +280,11 @@ export default function ContestarConteos() {
                               step="0.01"
                               required
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                              value={respuestas[`${index}_${detalle.CodigoBarras}`] || 0}
+                              value={respuestas[`${index}_${detalle.CodigoBarras}`] ?? ''}
+                              onFocus={() => {
+                                const key = `${index}_${detalle.CodigoBarras}`
+                                if (respuestas[key] === 0) setRespuestas(prev => { const n = {...prev}; delete n[key]; return n })
+                              }}
                               onChange={(e) => updateRespuesta(index, detalle.CodigoBarras, parseFloat(e.target.value) || 0)}
                             />
                           </div>
