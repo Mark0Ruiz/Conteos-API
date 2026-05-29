@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { FiCalendar, FiArrowLeft, FiSave, FiCamera, FiShoppingBag, FiTrash2, FiPlus, FiCheckCircle, FiAlertCircle } from 'react-icons/fi'
 import { useAuth } from '@/context/AuthContext'
@@ -15,7 +15,9 @@ export default function AsignarConteo() {
   const router = useRouter()
   
   const [sucursales, setSucursales] = useState<Sucursal[]>([])
-  const [filtroZona, setFiltroZona] = useState('')
+  const [sucursalQuery, setSucursalQuery] = useState('')
+  const [showSucursalList, setShowSucursalList] = useState(false)
+  const sucursalRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState({
     IdCentro: selectedSucursal?.IdCentro || '',
     FechaAsignacion: ''
@@ -43,12 +45,33 @@ export default function AsignarConteo() {
   const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sucursalRef.current && !sucursalRef.current.contains(e.target as Node)) {
+        setShowSucursalList(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
     if (user?.NivelUsuario === 4) {
       router.replace('/dashboard')
       return
     }
     loadSucursales()
   }, [selectedSucursal, user])
+
+  const sucursalesFiltradas = sucursalQuery
+    ? sucursales.filter(s => {
+        const q = sucursalQuery.toLowerCase()
+        return (
+          s.IdCentro.toLowerCase().includes(q) ||
+          s.Sucursales.toLowerCase().includes(q) ||
+          (s.Zona || '').toLowerCase().includes(q)
+        )
+      })
+    : sucursales
 
   const loadSucursales = async () => {
     try {
@@ -308,49 +331,49 @@ export default function AsignarConteo() {
                   </button>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* Filtro por zona */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Filtrar por zona</label>
-                    <select
-                      disabled={loadingData}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 text-sm"
-                      value={filtroZona}
-                      onChange={e => {
-                        setFiltroZona(e.target.value)
-                        setFormData(prev => ({ ...prev, IdCentro: '' }))
-                        setFieldErrors({ ...fieldErrors, IdCentro: '' })
-                      }}
-                    >
-                      <option value="">Todas las zonas</option>
-                      {[...new Set(sucursales.map(s => s.Zona || 'Sin zona'))].sort().map(z => (
-                        <option key={z} value={z}>{z}</option>
+                <div ref={sucursalRef} className="relative">
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    disabled={loadingData}
+                    placeholder={loadingData ? 'Cargando sucursales...' : 'Buscar por nombre, código o zona...'}
+                    value={sucursalQuery}
+                    onFocus={() => setShowSucursalList(true)}
+                    onChange={e => {
+                      setSucursalQuery(e.target.value)
+                      setFormData(prev => ({ ...prev, IdCentro: '' }))
+                      setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                      setShowSucursalList(true)
+                    }}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${
+                      fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                  />
+                  {showSucursalList && sucursalesFiltradas.length > 0 && (
+                    <ul className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {sucursalesFiltradas.map(s => (
+                        <li
+                          key={s.IdCentro}
+                          onMouseDown={() => {
+                            setFormData(prev => ({ ...prev, IdCentro: s.IdCentro }))
+                            setSucursalQuery(`${s.Sucursales} (${s.IdCentro})`)
+                            setShowSucursalList(false)
+                            setFieldErrors({ ...fieldErrors, IdCentro: '' })
+                          }}
+                          className="px-4 py-2.5 cursor-pointer hover:bg-blue-50 text-sm border-b border-gray-100 last:border-0"
+                        >
+                          <span className="font-medium text-gray-900">{s.Sucursales}</span>
+                          <span className="ml-2 text-xs text-gray-500">{s.IdCentro}</span>
+                          {s.Zona && <span className="ml-2 text-xs text-blue-500">{s.Zona}</span>}
+                        </li>
                       ))}
-                    </select>
-                  </div>
-                  {/* Selector de sucursal filtrado */}
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Sucursal</label>
-                    <select
-                      required
-                      disabled={loadingData}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 ${
-                        fieldErrors.IdCentro ? 'border-red-300 bg-red-50' : 'border-gray-300'
-                      }`}
-                      value={formData.IdCentro}
-                      onChange={e => {
-                        setFormData(prev => ({ ...prev, IdCentro: e.target.value }))
-                        setFieldErrors({ ...fieldErrors, IdCentro: '' })
-                      }}
-                    >
-                      <option value="">{loadingData ? 'Cargando...' : 'Seleccionar sucursal...'}</option>
-                      {sucursales
-                        .filter(s => !filtroZona || (s.Zona || 'Sin zona') === filtroZona)
-                        .map(s => (
-                          <option key={s.IdCentro} value={s.IdCentro}>{s.Sucursales} ({s.IdCentro})</option>
-                        ))}
-                    </select>
-                  </div>
+                    </ul>
+                  )}
+                  {showSucursalList && sucursalQuery && sucursalesFiltradas.length === 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 text-sm text-gray-500">
+                      Sin resultados para "{sucursalQuery}"
+                    </div>
+                  )}
                 </div>
               )}
               {fieldErrors.IdCentro && (
