@@ -671,7 +671,7 @@ export default function CrearConteo() {
               <FiCheckCircle className="w-6 h-6" />
               <div>
                 <p className="font-semibold">¡Conteo creado exitosamente!</p>
-                <p className="text-sm text-green-100">Ahora puedes asignarlo o comenzar a contestarlo.</p>
+                <p className="text-sm text-green-100">{user?.NivelUsuario === 4 ? 'Pendiente de validación por un monitorista.' : 'Ahora puedes asignarlo o comenzar a contestarlo.'}</p>
               </div>
             </div>
           )}

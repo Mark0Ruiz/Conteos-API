@@ -24,7 +24,7 @@ export function ConteosClient() {
   
   // Filtros
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pendiente' | 'finalizado'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pendiente' | 'sin_validar' | 'finalizado'>('all')
   const [sortOrder, setSortOrder] = useState<'recent' | 'oldest'>('recent')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -114,7 +114,8 @@ export function ConteosClient() {
     if (statusFilter !== 'all') {
       filtered = filtered.filter(c => {
         if (statusFilter === 'pendiente') return c.Envio === 0
-        if (statusFilter === 'finalizado') return c.Envio === 1
+        if (statusFilter === 'sin_validar') return c.Envio === 1 && c.Estatus === 0
+        if (statusFilter === 'finalizado') return c.Envio === 1 && c.Estatus === 1
         return true
       })
     }
@@ -168,15 +169,14 @@ export function ConteosClient() {
     return nombreUsuario ? `${idUsuario} - ${nombreUsuario}` : idUsuario.toString()
   }
 
-  const getStatusBadge = (envio: number) => {
-    switch (envio) {
-      case 0:
-        return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>
-      case 1:
-        return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Finalizado</span>
-      default:
-        return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Desconocido</span>
+  const getStatusBadge = (envio: number, estatus?: number) => {
+    if (envio === 0) {
+      return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">Pendiente</span>
     }
+    if (envio === 1 && estatus === 0) {
+      return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800">Sin Validar</span>
+    }
+    return <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Finalizado</span>
   }
 
   const clearFilters = () => {
@@ -307,6 +307,7 @@ export function ConteosClient() {
               >
                 <option value="all">Todos</option>
                 <option value="pendiente">Pendiente</option>
+                <option value="sin_validar">Sin Validar</option>
                 <option value="finalizado">Finalizado</option>
               </select>
             </div>
@@ -377,7 +378,7 @@ export function ConteosClient() {
                     <p className="text-sm text-gray-500">Conteo</p>
                     <p className="text-lg font-semibold text-gray-900">#{conteo.idConteo}</p>
                   </div>
-                  {getStatusBadge(conteo.Envio)}
+                  {getStatusBadge(conteo.Envio, conteo.Estatus)}
                 </div>
 
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
@@ -468,7 +469,7 @@ export function ConteosClient() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(conteo.Envio)}
+                      {getStatusBadge(conteo.Envio, conteo.Estatus)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {conteo.detalles?.length || 0}

@@ -89,7 +89,7 @@ export default function VerConteo() {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800">
         <FiCheckCircle className="w-4 h-4 mr-1" />
-        Validado
+        Finalizado
       </span>
     )
   }

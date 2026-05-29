@@ -227,7 +227,7 @@ export default function ValidarConteo() {
             <div className="fixed top-4 left-4 right-4 sm:left-auto sm:right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg z-50 flex items-center gap-3 sm:max-w-md">
               <FiCheckCircle className="w-6 h-6" />
               <div>
-                <p className="font-semibold">¡Conteo validado!</p>
+                <p className="font-semibold">¡Conteo finalizado!</p>
                 <p className="text-sm text-green-100">Redirigiendo a la lista...</p>
               </div>
             </div>
