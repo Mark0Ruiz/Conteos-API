@@ -23,8 +23,7 @@ export default function SeleccionarSucursal() {
       router.push('/login')
       return
     }
-    const BYPASS_SUCURSAL = new Set([52033, 61752])
-    if (user && (![2, 4, 5].includes(user.NivelUsuario) || BYPASS_SUCURSAL.has(user.IdUsuarios))) {
+    if (user && user.NivelUsuario !== 4) {
       router.push('/dashboard')
       return
     }

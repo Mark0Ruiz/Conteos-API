@@ -30,9 +30,7 @@ export default function LoginPage() {
         IdUsuarios: parseInt(credentials.IdUsuarios),
         Contraseña: credentials.Contraseña
       })
-      const BYPASS_SUCURSAL = new Set([52033, 61752])
-      const needsSucursal = [2, 4, 5].includes(loggedUser.NivelUsuario) && !BYPASS_SUCURSAL.has(loggedUser.IdUsuarios)
-      if (needsSucursal) {
+      if (loggedUser.NivelUsuario === 4) {
         router.push('/seleccionar-sucursal')
       } else {
         router.push('/dashboard')
