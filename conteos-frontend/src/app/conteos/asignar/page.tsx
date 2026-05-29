@@ -302,8 +302,8 @@ export default function AsignarConteo() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Paso 1: Sucursal */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200 rounded-t-xl">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
                   1
