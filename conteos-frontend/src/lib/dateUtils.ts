@@ -23,15 +23,15 @@ export const formatLocalDate = (dateString: string): string => {
 }
 
 /**
- * Extrae y formatea la hora de una cadena ISO (HH:MM)
+ * Extrae y formatea la hora de una cadena ISO (HH:MM) convirtiendo UTC a hora local
  */
 export const formatTime = (dateString: string | null | undefined): string => {
   if (!dateString) return ''
-  // If it has a T part with time info
-  const tIndex = dateString.indexOf('T')
-  if (tIndex === -1) return ''
-  const timePart = dateString.substring(tIndex + 1, tIndex + 6) // HH:MM
-  return timePart
+  // Force UTC parsing: append Z if not present so JS treats it as UTC, not local
+  const normalized = dateString.endsWith('Z') ? dateString : dateString + 'Z'
+  const date = new Date(normalized)
+  if (isNaN(date.getTime())) return ''
+  return date.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
 /**
