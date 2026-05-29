@@ -329,6 +329,8 @@ export default function EstadisticasPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
 
+  const isNivel4 = user?.NivelUsuario === 4
+
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -494,6 +496,14 @@ export default function EstadisticasPage() {
     ? `${selectedSucursalData.IdCentro} - ${selectedSucursalData.Sucursales}`
     : selectedSucursal
 
+  // Para nivel 4: lista plana de productos (sin agrupación por categoría)
+  const allProductsFaltantes: ProductAggregate[] = Object.values(globalStats.detallesFaltantes)
+    .flat()
+    .sort((a, b) => b.diferencia - a.diferencia)
+  const allProductsSobrantes: ProductAggregate[] = Object.values(globalStats.detallesSobrantes)
+    .flat()
+    .sort((a, b) => b.diferencia - a.diferencia)
+
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -615,20 +625,39 @@ export default function EstadisticasPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-          <CategoryRankingTable
-            title="Categorías con más faltante (General)"
-            rows={globalStats.faltantes}
-            detailsByCategory={globalStats.detallesFaltantes}
-            emptyMessage="No hay categorías con faltantes en los conteos analizados."
-            type="faltante"
-          />
-          <CategoryRankingTable
-            title="Categorías con más sobrante (General)"
-            rows={globalStats.sobrantes}
-            detailsByCategory={globalStats.detallesSobrantes}
-            emptyMessage="No hay categorías con sobrantes en los conteos analizados."
-            type="sobrante"
-          />
+          {isNivel4 ? (
+            <>
+              <ProductListTable
+                title="Productos con faltante en tus tiendas"
+                rows={allProductsFaltantes}
+                type="faltante"
+                emptyMessage="No hay productos con faltantes en los conteos analizados."
+              />
+              <ProductListTable
+                title="Productos con sobrante en tus tiendas"
+                rows={allProductsSobrantes}
+                type="sobrante"
+                emptyMessage="No hay productos con sobrantes en los conteos analizados."
+              />
+            </>
+          ) : (
+            <>
+              <CategoryRankingTable
+                title="Categorías con más faltante (General)"
+                rows={globalStats.faltantes}
+                detailsByCategory={globalStats.detallesFaltantes}
+                emptyMessage="No hay categorías con faltantes en los conteos analizados."
+                type="faltante"
+              />
+              <CategoryRankingTable
+                title="Categorías con más sobrante (General)"
+                rows={globalStats.sobrantes}
+                detailsByCategory={globalStats.detallesSobrantes}
+                emptyMessage="No hay categorías con sobrantes en los conteos analizados."
+                type="sobrante"
+              />
+            </>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
@@ -679,6 +708,7 @@ export default function EstadisticasPage() {
           </div>
         </div>
 
+        {!isNivel4 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
           <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
             <div>
@@ -726,6 +756,7 @@ export default function EstadisticasPage() {
             />
           </div>
         </div>
+        )}
 
         <div className="mt-8 text-xs text-gray-500 flex items-center gap-2">
           <FiCheckCircle className="w-4 h-4 text-gray-400" />

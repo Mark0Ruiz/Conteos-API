@@ -361,6 +361,7 @@ export default function Dashboard() {
               <span className="text-xs text-cyan-600 mt-1 text-center">Faltantes y sobrantes</span>
             </button>
             
+            {user?.NivelUsuario !== 4 && (
             <button
               onClick={() => router.push('/catalogo')}
               className="group relative flex flex-col items-center justify-center px-6 py-5 bg-white border-2 border-teal-500 text-teal-700 rounded-xl hover:bg-teal-50 hover:shadow-md transition-all duration-200"
@@ -370,6 +371,7 @@ export default function Dashboard() {
               <span className="font-medium text-center">Catálogo</span>
               <span className="text-xs text-teal-600 mt-1 text-center">Productos</span>
             </button>
+            )}
             
             {canGestionarApps && (
               <button
