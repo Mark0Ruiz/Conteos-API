@@ -137,10 +137,10 @@ export default function Dashboard() {
   }
 
   const userRole = user ? getRoleByLevel(user.NivelUsuario) : null
-  const canCreateConteo = user && ['Administrador', 'Supervisor', 'CCA', 'APP'].includes(userRole || '')
+  const canCreateConteo = user && ['Administrador', 'Supervisor', 'APP'].includes(userRole || '')
   const canAssignConteo = user && ['Administrador', 'Supervisor', 'CCA'].includes(userRole || '')
   const canEditConteo = user && ['Administrador', 'Supervisor'].includes(userRole || '')
-  const canAnswerConteo = true // Todos los usuarios pueden contestar conteos asignados
+  const canAnswerConteo = user?.NivelUsuario !== 3 // Monitoristas no contestan
   const canGestionarApps = user && (
     user.NivelUsuario === 1 || user.NivelUsuario === 2 || [52033, 61752].includes(user.IdUsuarios)
   )

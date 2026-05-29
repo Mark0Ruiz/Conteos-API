@@ -21,6 +21,10 @@ export default function ContestarConteos() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (user?.NivelUsuario === 3) {
+      router.replace('/dashboard')
+      return
+    }
     loadConteosAsignados()
   }, [])
 

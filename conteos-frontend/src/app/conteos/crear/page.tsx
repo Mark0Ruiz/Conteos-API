@@ -35,6 +35,10 @@ export default function CrearConteo() {
   const [precioAutoFill, setPrecioAutoFill] = useState(false)
 
   useEffect(() => {
+    if (user?.NivelUsuario === 3) {
+      router.replace('/dashboard')
+      return
+    }
     if (user?.NivelUsuario === 4) {
       if (!selectedSucursal) {
         router.push('/seleccionar-sucursal')
