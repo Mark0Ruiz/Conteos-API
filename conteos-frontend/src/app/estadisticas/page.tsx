@@ -326,7 +326,7 @@ function ProductListTable({
 }
 
 export default function EstadisticasPage() {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, selectedSucursal: authSucursal } = useAuth()
   const router = useRouter()
 
   const isNivel4 = user?.NivelUsuario === 4
@@ -448,8 +448,6 @@ export default function EstadisticasPage() {
       const sucursalesList = (sucursalesBase as SucursalData[])
         .slice()
         .sort((a, b) => a.IdCentro.localeCompare(b.IdCentro))
-      setSucursales(sucursalesList)
-
       const zoneSet = new Set<string>()
       for (const sucursal of sucursalesList) {
         const zoneLabel = sucursal.Zona?.trim() || (sucursal.IdZona ? `Zona ${sucursal.IdZona}` : 'Sin zona')
@@ -470,10 +468,23 @@ export default function EstadisticasPage() {
       )
 
       const conteosDetallados = conteosDetalladosRaw.filter(Boolean) as ConteoResponse[]
-      setConteosDetalladosAll(conteosDetallados)
-      recalculateStatistics(conteosDetallados, sucursalesList, categoryMap)
 
-      if (!selectedSucursal && sucursalesList.length > 0) {
+      // Para nivel 4: filtrar solo a la sucursal que eligió al iniciar sesión
+      const conteosParaProcesar = isNivel4 && authSucursal
+        ? conteosDetallados.filter((c) => c.IdCentro === authSucursal.IdCentro)
+        : conteosDetallados
+
+      const sucursalesParaProcesar = isNivel4 && authSucursal
+        ? sucursalesList.filter((s) => s.IdCentro === authSucursal.IdCentro)
+        : sucursalesList
+
+      setSucursales(sucursalesParaProcesar)
+      setConteosDetalladosAll(conteosParaProcesar)
+      recalculateStatistics(conteosParaProcesar, sucursalesParaProcesar, categoryMap)
+
+      if (isNivel4 && authSucursal) {
+        setSelectedSucursal(authSucursal.IdCentro)
+      } else if (!selectedSucursal && sucursalesList.length > 0) {
         setSelectedSucursal(sucursalesList[0].IdCentro)
       }
 
@@ -669,6 +680,7 @@ export default function EstadisticasPage() {
               </h2>
               <p className="text-sm text-gray-600 mt-1">Consulta faltantes y sobrantes por categoría en cada sucursal.</p>
             </div>
+            {!isNivel4 && (
             <div className="w-full sm:w-80">
               <label className="block text-sm font-medium text-gray-700 mb-2">Sucursal</label>
               <select
@@ -683,6 +695,7 @@ export default function EstadisticasPage() {
                 ))}
               </select>
             </div>
+            )}
           </div>
 
           <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
