@@ -48,6 +48,13 @@ export default function EditarConteoPage() {
     try {
       setLoading(true)
       setError(null)
+
+      // Nivel 2 no tiene permiso para editar conteos
+      if (user?.NivelUsuario === 2) {
+        router.replace('/conteos')
+        return
+      }
+
       const data = await conteosAPI.getConteo(conteoId)
       
       // Verificar que el conteo esté pendiente (Envio = 0)
