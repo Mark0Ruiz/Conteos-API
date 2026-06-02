@@ -199,8 +199,8 @@ export default function AsignarConteo() {
     try {
       const detalles = productosAgregados.map(p => ({
         CodigoBarras: p.CodigoBarras,
-        NSistema: p.NSistema,
-        NExcistencia: 0,
+        NSistema: 0,
+        NExcistencia: p.NSistema,
         Precio: p.Precio
       }))
       const datosAsignacion = {
@@ -478,7 +478,7 @@ export default function AsignarConteo() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Cantidad (piezas a contar) <span className="text-red-500">*</span>
+                        Existencias Físicas <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -495,7 +495,7 @@ export default function AsignarConteo() {
                           setFieldErrors({ ...fieldErrors, NSistema: '' })
                         }}
                       />
-                      <p className="mt-1 text-xs text-gray-500">Cantidad esperada en sistema</p>
+                      <p className="mt-1 text-xs text-gray-500">Cantidad contada físicamente en sucursal</p>
                       {fieldErrors.NSistema && (
                         <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
                           <FiAlertCircle className="w-3 h-3" />
