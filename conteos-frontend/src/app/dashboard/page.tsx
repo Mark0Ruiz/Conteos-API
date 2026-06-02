@@ -139,7 +139,7 @@ export default function Dashboard() {
   const userRole = user ? getRoleByLevel(user.NivelUsuario) : null
   const canCreateConteo = user && ['Administrador', 'Supervisor', 'APP'].includes(userRole || '')
   const canAssignConteo = user && ['Administrador', 'Supervisor', 'CCA'].includes(userRole || '')
-  const canEditConteo = user && ['Administrador'].includes(userRole || '')
+  const canEditConteo = user && ['Administrador', 'CCA'].includes(userRole || '')
   const canAnswerConteo = user?.NivelUsuario !== 3 // Monitoristas no contestan
   const canGestionarApps = user && (
     user.NivelUsuario === 1 || user.NivelUsuario === 2 || [52033, 61752].includes(user.IdUsuarios)
