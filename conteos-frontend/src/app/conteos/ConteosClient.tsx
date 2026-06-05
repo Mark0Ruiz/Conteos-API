@@ -404,7 +404,7 @@ export function ConteosClient() {
                   >
                     <FiEye className="w-4 h-4 mr-1.5" /> Ver
                   </button>
-                  {conteo.Envio === 0 && user?.NivelUsuario !== 2 && (
+                  {conteo.Envio === 0 && user?.NivelUsuario !== 4 && (
                     <button
                       onClick={() => router.push(`/conteos/editar/${conteo.idConteo}`)}
                       className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border border-orange-200 text-orange-700 bg-orange-50 hover:bg-orange-100"
@@ -483,7 +483,7 @@ export function ConteosClient() {
                         >
                           <FiEye className="w-5 h-5" />
                         </button>
-                        {conteo.Envio === 0 && user?.NivelUsuario !== 2 && (
+                        {conteo.Envio === 0 && user?.NivelUsuario !== 4 && (
                           <button
                             onClick={() => router.push(`/conteos/editar/${conteo.idConteo}`)}
                             className="text-orange-600 hover:text-orange-900"

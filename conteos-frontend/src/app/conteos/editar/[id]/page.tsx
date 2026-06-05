@@ -49,8 +49,8 @@ export default function EditarConteoPage() {
       setLoading(true)
       setError(null)
 
-      // Nivel 2 no tiene permiso para editar conteos
-      if (user?.NivelUsuario === 2) {
+      // Nivel 4 (APP) no puede editar conteos
+      if (user?.NivelUsuario === 4) {
         router.replace('/conteos')
         return
       }
