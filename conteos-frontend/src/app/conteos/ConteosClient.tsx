@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { FiFilter, FiSearch, FiCalendar, FiUser, FiPackage, FiEdit, FiEye } from 'react-icons/fi'
+import { FiFilter, FiSearch, FiCalendar, FiUser, FiPackage, FiEdit, FiEye, FiTrash } from 'react-icons/fi'
 import { conteosAPI } from '@/lib/api'
 import { ConteoResponse, User } from '@/types/api'
 import { formatShortDate } from '@/lib/dateUtils'
@@ -230,6 +230,25 @@ export function ConteosClient() {
     return rangeWithDots
   }
 
+  const handleDelete = async (id: number) => {
+    const confirmed = window.confirm('¿Eliminar este conteo? Esta acción no se puede deshacer.')
+    if (!confirmed) return
+    try {
+      await conteosAPI.deleteConteo(id)
+      // Quitar conteo de los arreglos locales
+      setConteos(prev => prev.filter(c => c.idConteo !== id))
+      setFilteredConteos(prev => prev.filter(c => c.idConteo !== id))
+      // Si estamos en una página donde ya no hay elementos, retroceder una página
+      if ((filteredConteos.length - 1) <= indexOfFirstItem && currentPage > 1) {
+        setCurrentPage(currentPage - 1)
+      }
+      alert('Conteo eliminado correctamente')
+    } catch (error) {
+      console.error('Error deleting conteo:', error)
+      alert('No se pudo eliminar el conteo. Revisa tus permisos o intenta de nuevo.')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -412,6 +431,14 @@ export function ConteosClient() {
                       <FiEdit className="w-4 h-4 mr-1.5" /> Editar
                     </button>
                   )}
+                  {user?.NivelUsuario === 1 && (
+                    <button
+                      onClick={() => handleDelete(conteo.idConteo)}
+                      className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                    >
+                      <FiTrash className="w-4 h-4 mr-1.5" /> Eliminar
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -490,6 +517,15 @@ export function ConteosClient() {
                             title="Editar"
                           >
                             <FiEdit className="w-5 h-5" />
+                          </button>
+                        )}
+                        {user?.NivelUsuario === 1 && (
+                          <button
+                            onClick={() => handleDelete(conteo.idConteo)}
+                            className="text-red-600 hover:text-red-900"
+                            title="Eliminar"
+                          >
+                            <FiTrash className="w-5 h-5" />
                           </button>
                         )}
                       </div>

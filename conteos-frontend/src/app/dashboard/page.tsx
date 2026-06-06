@@ -139,7 +139,7 @@ export default function Dashboard() {
   const userRole = user ? getRoleByLevel(user.NivelUsuario) : null
   const canCreateConteo = user && ['Administrador', 'Supervisor', 'APP'].includes(userRole || '')
   const canAssignConteo = user && ['Administrador', 'Supervisor', 'CCA'].includes(userRole || '')
-  const canEditConteo = user && ['Administrador', 'CCA'].includes(userRole || '')
+  const canEditConteo = user && ['Administrador', 'Supervisor', 'CCA'].includes(userRole || '')
   const canAnswerConteo = user?.NivelUsuario !== 3 // Monitoristas no contestan
   const canGestionarApps = user && (
     user.NivelUsuario === 1 || user.NivelUsuario === 2 || [52033, 61752].includes(user.IdUsuarios)
@@ -361,7 +361,7 @@ export default function Dashboard() {
               <span className="text-xs text-cyan-600 mt-1 text-center">Faltantes y sobrantes</span>
             </button>
             
-            {user?.NivelUsuario !== 4 && user?.NivelUsuario !== 2 && (
+            {user?.NivelUsuario !== 4 && (
             <button
               onClick={() => router.push('/catalogo')}
               className="group relative flex flex-col items-center justify-center px-6 py-5 bg-white border-2 border-teal-500 text-teal-700 rounded-xl hover:bg-teal-50 hover:shadow-md transition-all duration-200"
