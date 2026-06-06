@@ -361,7 +361,7 @@ export default function Dashboard() {
               <span className="text-xs text-cyan-600 mt-1 text-center">Faltantes y sobrantes</span>
             </button>
             
-            {user?.NivelUsuario !== 4 && (
+            {user && user.NivelUsuario !== 4 && user.NivelUsuario !== 2 && (
             <button
               onClick={() => router.push('/catalogo')}
               className="group relative flex flex-col items-center justify-center px-6 py-5 bg-white border-2 border-teal-500 text-teal-700 rounded-xl hover:bg-teal-50 hover:shadow-md transition-all duration-200"
@@ -385,7 +385,7 @@ export default function Dashboard() {
               </button>
             )}
             
-            {canEditConteo && stats.conteosPendientes > 0 && (
+            {canEditConteo && user?.NivelUsuario !== 2 && stats.conteosPendientes > 0 && (
               <button
                 onClick={() => {
                   // Navegar a la página de lista de conteos con filtro de pendientes
