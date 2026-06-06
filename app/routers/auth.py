@@ -182,6 +182,17 @@ async def set_app_sucursales(
 ):
     """Reemplazar todas las sucursales asignadas a un usuario APP (operación bulk)."""
     _check_gestion_apps(current_user)
+    # Si el usuario que solicita la operación es Nivel 2, permitir sólo centros
+    # que estén en su propia lista de UsuarioSucursal.
+    if current_user.NivelUsuario == 2:
+        asignadas = db.query(UsuarioSucursal.IdCentro).filter(UsuarioSucursal.IdUsuario == current_user.IdUsuarios).all()
+        asignadas_ids = {a[0] for a in asignadas}
+        invalid = [c for c in centros if c not in asignadas_ids]
+        if invalid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"No puedes asignar sucursales que no te pertenecen: {', '.join(invalid)}"
+            )
     usuario = db.query(Usuarios).filter(Usuarios.IdUsuarios == user_id, Usuarios.NivelUsuario == 4).first()
     if not usuario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario APP no encontrado")
