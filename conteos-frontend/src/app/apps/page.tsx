@@ -53,6 +53,7 @@ export default function GestionAppsPage() {
 
   const [appUsers, setAppUsers] = useState<AppUser[]>([])
   const [allSucursales, setAllSucursales] = useState<Sucursal[]>([])
+  const [allowedCentrosForManager, setAllowedCentrosForManager] = useState<Set<string> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -99,6 +100,17 @@ export default function GestionAppsPage() {
       ])
       setAppUsers(users)
       setAllSucursales(sucursales)
+      // Si el usuario actual es Nivel 2, obtener sus sucursales permitidas
+      if (user?.NivelUsuario === 2) {
+        try {
+          const asignadas = await authAPI.getAppSucursales(user.IdUsuarios)
+          setAllowedCentrosForManager(new Set(asignadas.map((s: Sucursal) => s.IdCentro)))
+        } catch (e) {
+          setAllowedCentrosForManager(new Set())
+        }
+      } else {
+        setAllowedCentrosForManager(null)
+      }
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { detail?: string } }; message?: string }
       const status = axiosErr?.response?.status
@@ -161,6 +173,7 @@ export default function GestionAppsPage() {
 
   const filteredModalSucursales = useMemo(() => {
     return allSucursales
+      .filter(s => !allowedCentrosForManager || allowedCentrosForManager.has(s.IdCentro))
       .filter(s => !zonaFilter || (s.Zona || 'Sin zona') === zonaFilter)
       .filter(s =>
         !searchModal ||
@@ -181,7 +194,11 @@ export default function GestionAppsPage() {
   }, [filteredModalSucursales])
 
   const seleccionarTodas = () =>
-    setAssignedCentros(new Set(allSucursales.map(s => s.IdCentro)))
+    setAssignedCentros(new Set(
+      allSucursales
+        .filter(s => !allowedCentrosForManager || allowedCentrosForManager.has(s.IdCentro))
+        .map(s => s.IdCentro)
+    ))
 
   const deseleccionarTodas = () => setAssignedCentros(new Set())
 
@@ -440,7 +457,11 @@ export default function GestionAppsPage() {
                   <FiCheck className="w-3.5 h-3.5" /> Seleccionadas: {assignedCentros.size}
                 </span>
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500 text-white text-sm font-medium">
-                  <FiMapPin className="w-3.5 h-3.5" /> Disponibles: {allSucursales.length}
+                  <FiMapPin className="w-3.5 h-3.5" /> Disponibles: {(
+                    allowedCentrosForManager
+                      ? allSucursales.filter(s => allowedCentrosForManager.has(s.IdCentro)).length
+                      : allSucursales.length
+                  )}
                 </span>
                 {assignedCentros.size === allSucursales.length ? (
                   <button
