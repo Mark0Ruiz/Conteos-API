@@ -107,6 +107,12 @@ export const conteosAPI = {
     return response.data
   },
 
+  // Reasignar (reabrir) conteo y poner existencias a cero
+  reasignarConteo: async (id: number) => {
+    const response = await api.put(`/api/v1/conteos/${id}/reasignar`)
+    return response.data
+  },
+
   // Contestar conteo
   contestarConteo: async (id: number, data: { detalles: any[] }) => {
     const response = await api.put(`/api/v1/conteos/${id}/contestar`, data)

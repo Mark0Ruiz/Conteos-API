@@ -378,6 +378,35 @@ class ConteoService:
         db.commit()
         
         return {"message": f"Conteo {conteo_id} eliminado exitosamente"}
+
+    @staticmethod
+    def reasignar_conteo(db: Session, conteo_id: int, user_id: int) -> ConteoResponse:
+        """Reasignar un conteo: marcar como pendiente (Envio=0), limpiar existencias a 0 y desasignar usuario.
+
+        Esto permite volver a asignar/editar las existencias en sistema y físicas.
+        """
+        conteo = db.query(Conteo).filter(Conteo.idConteo == conteo_id).first()
+        if not conteo:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Conteo no encontrado"
+            )
+
+        # Cambiar estado a pendiente para permitir edición
+        conteo.Envio = 0
+        conteo.Estatus = 0
+        conteo.IdUsuario = None
+
+        # Poner todas las existencias a cero para que se reasigne/complete nuevamente
+        detalles = db.query(ConteoDetalles).filter(ConteoDetalles.IdConteo == conteo_id).all()
+        for d in detalles:
+            d.NSistema = 0.0
+            d.NExcistencia = 0.0
+
+        db.commit()
+        db.refresh(conteo)
+
+        return ConteoService._build_conteo_response(db, conteo)
     
     @staticmethod
     def obtener_conteo(

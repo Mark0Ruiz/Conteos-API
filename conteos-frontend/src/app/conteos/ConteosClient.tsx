@@ -519,6 +519,26 @@ export function ConteosClient() {
                             <FiEdit className="w-5 h-5" />
                           </button>
                         )}
+                        {conteo.Envio === 1 && user && [1,2,3,7,8].includes(user.NivelUsuario) && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const confirmed = window.confirm('¿Reasignar este conteo a su sucursal original y reiniciar existencias a cero?')
+                                if (!confirmed) return
+                                await conteosAPI.reasignarConteo(conteo.idConteo)
+                                // Abrir página de edición para capturar NSistema y N° físico
+                                router.push(`/conteos/editar/${conteo.idConteo}`)
+                              } catch (err) {
+                                console.error('Error reasignando conteo:', err)
+                                alert('No se pudo reasignar el conteo. Revisa permisos o intenta de nuevo.')
+                              }
+                            }}
+                            className="text-teal-600 hover:text-teal-900"
+                            title="Reasignar"
+                          >
+                            <FiPackage className="w-5 h-5" />
+                          </button>
+                        )}
                         {user?.NivelUsuario === 1 && (
                           <button
                             onClick={() => handleDelete(conteo.idConteo)}

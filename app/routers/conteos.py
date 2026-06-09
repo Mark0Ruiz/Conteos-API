@@ -83,6 +83,20 @@ async def editar_conteo(
     """
     return ConteoService.editar_conteo(db, conteo_id, conteo_data, current_user.IdUsuarios)
 
+
+@router.put("/{conteo_id}/reasignar", response_model=ConteoResponse)
+async def reasignar_conteo(
+    conteo_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuarios = Depends(require_asignar)
+):
+    """
+    Reasignar (reabrir) un conteo finalizado y poner existencias a cero.
+
+    **Roles permitidos**: mismos que para asignar.
+    """
+    return ConteoService.reasignar_conteo(db, conteo_id, current_user.IdUsuarios)
+
 @router.put("/{conteo_id}/contestar", response_model=ConteoResponse)
 async def contestar_conteo(
     conteo_id: int,
