@@ -274,8 +274,9 @@ export default function EditarConteoPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={detalle.NSistema}
-                        onChange={(e) => handleNSistemaChange(detalle.idConteoDetalles, e.target.value)}
+                          value={detalle.NSistema}
+                          onFocus={(e) => (e.currentTarget as HTMLInputElement).select()}
+                          onChange={(e) => handleNSistemaChange(detalle.idConteoDetalles, e.target.value)}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-yellow-50 font-medium"
                       />
                     </label>
@@ -359,6 +360,7 @@ export default function EditarConteoPage() {
                           min="0"
                           step="0.01"
                           value={detalle.NSistema}
+                          onFocus={(e) => (e.currentTarget as HTMLInputElement).select()}
                           onChange={(e) => handleNSistemaChange(detalle.idConteoDetalles, e.target.value)}
                           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-yellow-50 font-medium"
                         />
