@@ -525,9 +525,9 @@ export function ConteosClient() {
                               try {
                                 const confirmed = window.confirm('¿Reasignar este conteo a su sucursal original y reiniciar existencias a cero?')
                                 if (!confirmed) return
-                                await conteosAPI.reasignarConteo(conteo.idConteo)
-                                // Abrir página de edición para capturar NSistema y N° físico
-                                router.push(`/conteos/editar/${conteo.idConteo}`)
+                                const nuevo = await conteosAPI.reasignarConteo(conteo.idConteo)
+                                // Abrir página de edición del nuevo conteo para capturar NSistema y N° físico
+                                router.push(`/conteos/editar/${nuevo.idConteo}`)
                               } catch (err) {
                                 console.error('Error reasignando conteo:', err)
                                 alert('No se pudo reasignar el conteo. Revisa permisos o intenta de nuevo.')

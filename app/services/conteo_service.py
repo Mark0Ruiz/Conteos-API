@@ -385,28 +385,42 @@ class ConteoService:
 
         Esto permite volver a asignar/editar las existencias en sistema y físicas.
         """
-        conteo = db.query(Conteo).filter(Conteo.idConteo == conteo_id).first()
-        if not conteo:
+        origen = db.query(Conteo).filter(Conteo.idConteo == conteo_id).first()
+        if not origen:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Conteo no encontrado"
             )
 
-        # Cambiar estado a pendiente para permitir edición
-        conteo.Envio = 0
-        conteo.Estatus = 0
-        conteo.IdUsuario = None
+        # Crear un nuevo conteo basado en el original pero en estado pendiente
+        nuevo_conteo = Conteo(
+            Fechal=date.today(),
+            FechaHora=datetime.now(),
+            Envio=0,  # pendiente
+            IdRealizo=user_id,
+            IdCentro=origen.IdCentro,
+            IdUsuario=None,
+            Estatus=0
+        )
+        db.add(nuevo_conteo)
+        db.flush()
 
-        # Poner todas las existencias a cero para que se reasigne/complete nuevamente
-        detalles = db.query(ConteoDetalles).filter(ConteoDetalles.IdConteo == conteo_id).all()
-        for d in detalles:
-            d.NSistema = 0.0
-            d.NExcistencia = 0.0
+        # Copiar detalles pero con existencias en cero
+        detalles_origen = db.query(ConteoDetalles).filter(ConteoDetalles.IdConteo == conteo_id).all()
+        for d in detalles_origen:
+            nuevo_detalle = ConteoDetalles(
+                IdConteo=nuevo_conteo.idConteo,
+                CodigoBarras=d.CodigoBarras,
+                NSistema=0.0,
+                NExcistencia=0.0,
+                Precio=d.Precio
+            )
+            db.add(nuevo_detalle)
 
         db.commit()
-        db.refresh(conteo)
+        db.refresh(nuevo_conteo)
 
-        return ConteoService._build_conteo_response(db, conteo)
+        return ConteoService._build_conteo_response(db, nuevo_conteo)
     
     @staticmethod
     def obtener_conteo(
