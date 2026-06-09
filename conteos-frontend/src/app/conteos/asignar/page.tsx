@@ -123,7 +123,7 @@ export default function AsignarConteo() {
     // Validar campos
     const errors: { [key: string]: string } = {}
     if (!productoActual.CodigoBarras) errors.CodigoBarras = 'El código de barras es requerido'
-    if (productoActual.NSistema <= 0) errors.NSistema = 'La cantidad debe ser mayor a 0'
+    if (productoActual.NSistema < 0) errors.NSistema = 'La cantidad no puede ser negativa'
     if (productoActual.Precio <= 0) errors.Precio = 'El precio debe ser mayor a 0'
 
     if (Object.keys(errors).length > 0) {
