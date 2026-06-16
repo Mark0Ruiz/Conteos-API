@@ -290,7 +290,6 @@ export default function EditarConteoPage() {
                             min="0"
                             step="0.01"
                             value={detalle.NExcistencia}
-                            onFocus={(e) => (e.currentTarget as HTMLInputElement).select()}
                             onChange={(e) => handleNExcistenciaChange(detalle.idConteoDetalles, e.target.value)}
                             className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium"
                           />
@@ -366,16 +365,8 @@ export default function EditarConteoPage() {
                           className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-yellow-50 font-medium"
                         />
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={detalle.NExcistencia}
-                          onFocus={(e) => (e.currentTarget as HTMLInputElement).select()}
-                          onChange={(e) => handleNExcistenciaChange(detalle.idConteoDetalles, e.target.value)}
-                          className="w-32 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-medium"
-                        />
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {detalle.NExcistencia}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         ${detalle.Precio.toFixed(2)}
