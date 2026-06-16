@@ -29,7 +29,8 @@ class ConteoService:
             )
         
         # Verificar que todos los productos existen
-        codigos_barras = [detalle.CodigoBarras for detalle in conteo_data.detalles]
+        # Normalizar códigos de barras: asegurar string y quitar espacios alrededor
+        codigos_barras = [str(detalle.CodigoBarras).strip() for detalle in conteo_data.detalles]
         productos_existentes = db.query(Catalogo.CodigoBarras).filter(
             Catalogo.CodigoBarras.in_(codigos_barras)
         ).all()
@@ -106,7 +107,8 @@ class ConteoService:
             )
         
         # Verificar que todos los productos existen
-        codigos_barras = [detalle.CodigoBarras for detalle in conteo_data.detalles]
+        # Normalizar códigos de barras: asegurar string y quitar espacios alrededor
+        codigos_barras = [str(detalle.CodigoBarras).strip() for detalle in conteo_data.detalles]
         productos_existentes = db.query(Catalogo.CodigoBarras).filter(
             Catalogo.CodigoBarras.in_(codigos_barras)
         ).all()
@@ -225,7 +227,8 @@ class ConteoService:
             db.query(ConteoDetalles).filter(ConteoDetalles.IdConteo == conteo_id).delete()
             
             # Verificar que todos los productos existen
-            codigos_barras = [detalle.CodigoBarras for detalle in conteo_data.detalles]
+            # Normalizar códigos de barras: asegurar string y quitar espacios alrededor
+            codigos_barras = [str(detalle.CodigoBarras).strip() for detalle in conteo_data.detalles]
             productos_existentes = db.query(Catalogo.CodigoBarras).filter(
                 Catalogo.CodigoBarras.in_(codigos_barras)
             ).all()
