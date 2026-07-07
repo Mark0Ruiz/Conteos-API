@@ -31,11 +31,14 @@ interface ProductAggregate {
   CodigoBarras: string
   Producto: string
   diferencia: number
+  Precio?: number
+  monto?: number
 }
 
 interface CategoryAggregate {
   categoria: string
   diferencia: number
+  monto?: number
 }
 
 interface GroupStats {
@@ -67,7 +70,8 @@ const addToCategoryProductMap = (
   categoria: string,
   codigoBarras: string,
   producto: string,
-  diferencia: number
+  diferencia: number,
+  precio?: number
 ) => {
   if (!categoryProductMap[categoria]) {
     categoryProductMap[categoria] = {}
@@ -78,10 +82,14 @@ const addToCategoryProductMap = (
       CodigoBarras: codigoBarras,
       Producto: producto,
       diferencia: 0,
+      Precio: precio || 0,
+      monto: 0,
     }
   }
 
   categoryProductMap[categoria][codigoBarras].diferencia += diferencia
+  categoryProductMap[categoria][codigoBarras].monto =
+    (categoryProductMap[categoria][codigoBarras].monto || 0) + diferencia * (precio || 0)
 }
 
 const getProductsByType = (
@@ -94,11 +102,16 @@ const getProductsByType = (
     .map((product) => ({
       ...product,
       diferencia: Math.abs(product.diferencia),
+      monto: Math.abs(product.monto || 0),
     }))
 }
 
 const getTotalDifference = (products: ProductAggregate[]) => {
   return products.reduce((acc, product) => acc + product.diferencia, 0)
+}
+
+const getTotalAmount = (products: ProductAggregate[]) => {
+  return products.reduce((acc, product) => acc + (product.monto || 0), 0)
 }
 
 const getTopCategories = (categories: CategoryAggregate[], limit = TOP_LIMIT) => {
@@ -112,20 +125,22 @@ const buildGroupStats = (categoryProductMap: Record<string, Record<string, Produ
   const detallesFaltantes: Record<string, ProductAggregate[]> = {}
   const detallesSobrantes: Record<string, ProductAggregate[]> = {}
 
-  for (const [categoria, products] of Object.entries(categoryProductMap)) {
+    for (const [categoria, products] of Object.entries(categoryProductMap)) {
     const productsFaltantes = getProductsByType(products, 'faltante')
     const productsSobrantes = getProductsByType(products, 'sobrante')
 
     const totalFaltante = getTotalDifference(productsFaltantes)
+    const totalFaltanteMonto = getTotalAmount(productsFaltantes)
     const totalSobrante = getTotalDifference(productsSobrantes)
+    const totalSobranteMonto = getTotalAmount(productsSobrantes)
 
     if (totalFaltante > 0) {
-      faltantes.push({ categoria, diferencia: totalFaltante })
+      faltantes.push({ categoria, diferencia: totalFaltante, monto: totalFaltanteMonto })
       detallesFaltantes[categoria] = productsFaltantes
     }
 
     if (totalSobrante > 0) {
-      sobrantes.push({ categoria, diferencia: totalSobrante })
+      sobrantes.push({ categoria, diferencia: totalSobrante, monto: totalSobranteMonto })
       detallesSobrantes[categoria] = productsSobrantes
     }
   }
@@ -212,8 +227,9 @@ function CategoryRankingTable({
                       {row.categoria}
                     </button>
                   </td>
-                  <td className={`px-4 py-3 whitespace-nowrap text-sm text-right font-semibold ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
-                    {row.diferencia.toFixed(2)}
+                  <td className={`px-4 py-3 whitespace-nowrap text-sm text-right ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
+                    <div className="font-semibold">{row.diferencia.toFixed(2)}</div>
+                    <div className="text-xs text-gray-600 mt-1">{(row.monto || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</div>
                   </td>
                 </tr>
               ))
@@ -241,7 +257,8 @@ function CategoryRankingTable({
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
                   <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Diferencia</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+                  <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -254,14 +271,17 @@ function CategoryRankingTable({
                       <td className={`px-4 py-2 whitespace-nowrap text-sm text-right font-semibold ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
                         {product.diferencia.toFixed(2)}
                       </td>
+                      <td className={`px-4 py-2 whitespace-nowrap text-sm text-right font-semibold ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
+                        {(product.monto || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                      </td>
                     </tr>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-sm text-gray-500">
-                      No hay productos para esta categoría.
-                    </td>
-                  </tr>
+                    <tr>
+                      <td colSpan={5} className="px-4 py-6 text-center text-sm text-gray-500">
+                        No hay productos para esta categoría.
+                      </td>
+                    </tr>
                 )}
               </tbody>
             </table>
@@ -298,7 +318,8 @@ function ProductListTable({
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Diferencia</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cantidad</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -311,11 +332,14 @@ function ProductListTable({
                   <td className={`px-4 py-2 whitespace-nowrap text-sm text-right font-semibold ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
                     {row.diferencia.toFixed(2)}
                   </td>
+                  <td className={`px-4 py-2 whitespace-nowrap text-sm text-right font-semibold ${type === 'faltante' ? 'text-red-600' : 'text-green-600'}`}>
+                    {(row.monto || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}
+                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm text-gray-500">{emptyMessage}</td>
+                <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">{emptyMessage}</td>
               </tr>
             )}
           </tbody>
@@ -390,9 +414,10 @@ export default function EstadisticasPage() {
         const categoria = categoryMap[detalle.CodigoBarras] || 'Sin categoría'
         const producto = detalle.Producto || 'Sin nombre'
 
-        addToCategoryProductMap(globalByCategory, categoria, detalle.CodigoBarras, producto, diferencia)
-        addToCategoryProductMap(bySucursalByCategory[sucursalId], categoria, detalle.CodigoBarras, producto, diferencia)
-        addToCategoryProductMap(byZonaByCategory[zonaLabel], categoria, detalle.CodigoBarras, producto, diferencia)
+        const precio = Number(detalle.Precio || 0)
+        addToCategoryProductMap(globalByCategory, categoria, detalle.CodigoBarras, producto, diferencia, precio)
+        addToCategoryProductMap(bySucursalByCategory[sucursalId], categoria, detalle.CodigoBarras, producto, diferencia, precio)
+        addToCategoryProductMap(byZonaByCategory[zonaLabel], categoria, detalle.CodigoBarras, producto, diferencia, precio)
       }
     }
 
@@ -515,6 +540,11 @@ export default function EstadisticasPage() {
     .flat()
     .sort((a, b) => b.diferencia - a.diferencia)
 
+  const totalFaltanteCantidad = globalStats.faltantes.reduce((acc, g) => acc + g.diferencia, 0)
+  const totalFaltanteMonto = globalStats.faltantes.reduce((acc, g) => acc + (g.monto || 0), 0)
+  const totalSobranteCantidad = globalStats.sobrantes.reduce((acc, g) => acc + g.diferencia, 0)
+  const totalSobranteMonto = globalStats.sobrantes.reduce((acc, g) => acc + (g.monto || 0), 0)
+
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -621,10 +651,20 @@ export default function EstadisticasPage() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p className="text-sm text-gray-600">Categorías faltantes</p>
             <p className="text-2xl font-bold text-red-600 mt-1">{globalStats.faltantes.length}</p>
+            <p className="text-sm text-gray-600 mt-2">
+              Cantidad: <span className="font-semibold text-red-600">{totalFaltanteCantidad.toFixed(2)}</span>
+              {' '}• Monto:{' '}
+              <span className="font-semibold text-red-600">{totalFaltanteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+            </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p className="text-sm text-gray-600">Categorías sobrantes</p>
             <p className="text-2xl font-bold text-green-600 mt-1">{globalStats.sobrantes.length}</p>
+            <p className="text-sm text-gray-600 mt-2">
+              Cantidad: <span className="font-semibold text-green-600">{totalSobranteCantidad.toFixed(2)}</span>
+              {' '}• Monto:{' '}
+              <span className="font-semibold text-green-600">{totalSobranteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+            </p>
           </div>
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
             <p className="text-sm text-gray-600">Fecha de consulta</p>
