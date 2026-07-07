@@ -545,6 +545,8 @@ export default function EstadisticasPage() {
   const totalSobranteCantidad = globalStats.sobrantes.reduce((acc, g) => acc + g.diferencia, 0)
   const totalSobranteMonto = globalStats.sobrantes.reduce((acc, g) => acc + (g.monto || 0), 0)
 
+  const hasRange = dateFrom !== '' && dateTo !== ''
+
   if (isLoading || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -643,178 +645,186 @@ export default function EstadisticasPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Conteos analizados</p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{conteosAnalizados}</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Categorías faltantes</p>
-            <p className="text-2xl font-bold text-red-600 mt-1">{globalStats.faltantes.length}</p>
-            <p className="text-sm text-gray-600 mt-2">
-              Cantidad: <span className="font-semibold text-red-600">{totalFaltanteCantidad.toFixed(2)}</span>
-              {' '}• Monto:{' '}
-              <span className="font-semibold text-red-600">{totalFaltanteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Categorías sobrantes</p>
-            <p className="text-2xl font-bold text-green-600 mt-1">{globalStats.sobrantes.length}</p>
-            <p className="text-sm text-gray-600 mt-2">
-              Cantidad: <span className="font-semibold text-green-600">{totalSobranteCantidad.toFixed(2)}</span>
-              {' '}• Monto:{' '}
-              <span className="font-semibold text-green-600">{totalSobranteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <p className="text-sm text-gray-600">Fecha de consulta</p>
-            <p className="text-sm font-semibold text-gray-900 mt-2 flex items-center gap-2">
-              <FiCalendar className="w-4 h-4 text-gray-500" />
-              {new Date().toLocaleDateString('es-MX')}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
-          {isNivel4 ? (
-            <>
-              <ProductListTable
-                title="Productos con faltante en tus tiendas"
-                rows={allProductsFaltantes}
-                type="faltante"
-                emptyMessage="No hay productos con faltantes en los conteos analizados."
-              />
-              <ProductListTable
-                title="Productos con sobrante en tus tiendas"
-                rows={allProductsSobrantes}
-                type="sobrante"
-                emptyMessage="No hay productos con sobrantes en los conteos analizados."
-              />
-            </>
-          ) : (
-            <>
-              <CategoryRankingTable
-                title="Categorías con más faltante (General)"
-                rows={globalStats.faltantes}
-                detailsByCategory={globalStats.detallesFaltantes}
-                emptyMessage="No hay categorías con faltantes en los conteos analizados."
-                type="faltante"
-              />
-              <CategoryRankingTable
-                title="Categorías con más sobrante (General)"
-                rows={globalStats.sobrantes}
-                detailsByCategory={globalStats.detallesSobrantes}
-                emptyMessage="No hay categorías con sobrantes en los conteos analizados."
-                type="sobrante"
-              />
-            </>
-          )}
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <FiPackage className="w-5 h-5 text-indigo-600" />
-                Por sucursal
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Consulta faltantes y sobrantes por categoría en cada sucursal.</p>
+        {hasRange ? (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <p className="text-sm text-gray-600">Conteos analizados</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{conteosAnalizados}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <p className="text-sm text-gray-600">Categorías faltantes</p>
+                <p className="text-2xl font-bold text-red-600 mt-1">{globalStats.faltantes.length}</p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Cantidad: <span className="font-semibold text-red-600">{totalFaltanteCantidad.toFixed(2)}</span>
+                  {' '}• Monto:{' '}
+                  <span className="font-semibold text-red-600">{totalFaltanteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+                </p>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <p className="text-sm text-gray-600">Categorías sobrantes</p>
+                <p className="text-2xl font-bold text-green-600 mt-1">{globalStats.sobrantes.length}</p>
+                <p className="text-sm text-gray-600 mt-2">
+                  Cantidad: <span className="font-semibold text-green-600">{totalSobranteCantidad.toFixed(2)}</span>
+                  {' '}• Monto:{' '}
+                  <span className="font-semibold text-green-600">{totalSobranteMonto.toLocaleString('es-MX', { style: 'currency', currency: 'MXN' })}</span>
+                </p>
+              </div>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <p className="text-sm text-gray-600">Fecha de consulta</p>
+                <p className="text-sm font-semibold text-gray-900 mt-2 flex items-center gap-2">
+                  <FiCalendar className="w-4 h-4 text-gray-500" />
+                  {new Date().toLocaleDateString('es-MX')}
+                </p>
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-8">
+              {isNivel4 ? (
+                <>
+                  <ProductListTable
+                    title="Productos con faltante en tus tiendas"
+                    rows={allProductsFaltantes}
+                    type="faltante"
+                    emptyMessage="No hay productos con faltantes en los conteos analizados."
+                  />
+                  <ProductListTable
+                    title="Productos con sobrante en tus tiendas"
+                    rows={allProductsSobrantes}
+                    type="sobrante"
+                    emptyMessage="No hay productos con sobrantes en los conteos analizados."
+                  />
+                </>
+              ) : (
+                <>
+                  <CategoryRankingTable
+                    title="Categorías con más faltante (General)"
+                    rows={globalStats.faltantes}
+                    detailsByCategory={globalStats.detallesFaltantes}
+                    emptyMessage="No hay categorías con faltantes en los conteos analizados."
+                    type="faltante"
+                  />
+                  <CategoryRankingTable
+                    title="Categorías con más sobrante (General)"
+                    rows={globalStats.sobrantes}
+                    detailsByCategory={globalStats.detallesSobrantes}
+                    emptyMessage="No hay categorías con sobrantes en los conteos analizados."
+                    type="sobrante"
+                  />
+                </>
+              )}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <FiPackage className="w-5 h-5 text-indigo-600" />
+                    Por sucursal
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Consulta faltantes y sobrantes por categoría en cada sucursal.</p>
+                </div>
+                {!isNivel4 && (
+                <div className="w-full sm:w-80">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Sucursal</label>
+                  <select
+                    value={selectedSucursal}
+                    onChange={(event) => setSelectedSucursal(event.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    {sucursales.map((sucursal) => (
+                      <option key={sucursal.IdCentro} value={sucursal.IdCentro}>
+                        {sucursal.IdCentro} - {sucursal.Sucursales}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                )}
+              </div>
+
+              <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
+                <FiMapPin className="w-4 h-4 text-gray-500" />
+                {selectedSucursalLabel || 'Sin sucursal seleccionada'}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <CategoryRankingTable
+                  title="Categorías con más faltante en sucursal"
+                  rows={selectedSucursalStats.faltantes}
+                  detailsByCategory={selectedSucursalStats.detallesFaltantes}
+                  emptyMessage="Sin categorías faltantes para esta sucursal."
+                  type="faltante"
+                />
+                <CategoryRankingTable
+                  title="Categorías con más sobrante en sucursal"
+                  rows={selectedSucursalStats.sobrantes}
+                  detailsByCategory={selectedSucursalStats.detallesSobrantes}
+                  emptyMessage="Sin categorías sobrantes para esta sucursal."
+                  type="sobrante"
+                />
+              </div>
+            </div>
+
             {!isNivel4 && (
-            <div className="w-full sm:w-80">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Sucursal</label>
-              <select
-                value={selectedSucursal}
-                onChange={(event) => setSelectedSucursal(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                {sucursales.map((sucursal) => (
-                  <option key={sucursal.IdCentro} value={sucursal.IdCentro}>
-                    {sucursal.IdCentro} - {sucursal.Sucursales}
-                  </option>
-                ))}
-              </select>
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+              <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <FiMapPin className="w-5 h-5 text-teal-600" />
+                    Por zona
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">Consulta faltantes y sobrantes por categoría en cada zona.</p>
+                </div>
+                <div className="w-full sm:w-80">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Zona</label>
+                  <select
+                    value={selectedZona}
+                    onChange={(event) => setSelectedZona(event.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  >
+                    {zonas.map((zona) => (
+                      <option key={zona} value={zona}>
+                        {zona}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
+                <FiMapPin className="w-4 h-4 text-gray-500" />
+                {selectedZona || 'Sin zona seleccionada'}
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <CategoryRankingTable
+                  title="Categorías con más faltante en zona"
+                  rows={selectedZonaStats.faltantes}
+                  detailsByCategory={selectedZonaStats.detallesFaltantes}
+                  emptyMessage="Sin categorías faltantes para esta zona."
+                  type="faltante"
+                />
+                <CategoryRankingTable
+                  title="Categorías con más sobrante en zona"
+                  rows={selectedZonaStats.sobrantes}
+                  detailsByCategory={selectedZonaStats.detallesSobrantes}
+                  emptyMessage="Sin categorías sobrantes para esta zona."
+                  type="sobrante"
+                />
+              </div>
             </div>
             )}
-          </div>
 
-          <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
-            <FiMapPin className="w-4 h-4 text-gray-500" />
-            {selectedSucursalLabel || 'Sin sucursal seleccionada'}
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <CategoryRankingTable
-              title="Categorías con más faltante en sucursal"
-              rows={selectedSucursalStats.faltantes}
-              detailsByCategory={selectedSucursalStats.detallesFaltantes}
-              emptyMessage="Sin categorías faltantes para esta sucursal."
-              type="faltante"
-            />
-            <CategoryRankingTable
-              title="Categorías con más sobrante en sucursal"
-              rows={selectedSucursalStats.sobrantes}
-              detailsByCategory={selectedSucursalStats.detallesSobrantes}
-              emptyMessage="Sin categorías sobrantes para esta sucursal."
-              type="sobrante"
-            />
-          </div>
-        </div>
-
-        {!isNivel4 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                <FiMapPin className="w-5 h-5 text-teal-600" />
-                Por zona
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">Consulta faltantes y sobrantes por categoría en cada zona.</p>
+            <div className="mt-8 text-xs text-gray-500 flex items-center gap-2">
+              <FiCheckCircle className="w-4 h-4 text-gray-400" />
+              El ranking se calcula por diferencia neta entre existencias físicas y de sistema, agrupado por categoría.
             </div>
-            <div className="w-full sm:w-80">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Zona</label>
-              <select
-                value={selectedZona}
-                onChange={(event) => setSelectedZona(event.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-              >
-                {zonas.map((zona) => (
-                  <option key={zona} value={zona}>
-                    {zona}
-                  </option>
-                ))}
-              </select>
-            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6 text-center text-gray-600">
+            Selecciona un rango de fechas (Desde y Hasta) para ver los resultados.
           </div>
-
-          <div className="mb-4 text-sm text-gray-600 flex items-center gap-2">
-            <FiMapPin className="w-4 h-4 text-gray-500" />
-            {selectedZona || 'Sin zona seleccionada'}
-          </div>
-
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <CategoryRankingTable
-              title="Categorías con más faltante en zona"
-              rows={selectedZonaStats.faltantes}
-              detailsByCategory={selectedZonaStats.detallesFaltantes}
-              emptyMessage="Sin categorías faltantes para esta zona."
-              type="faltante"
-            />
-            <CategoryRankingTable
-              title="Categorías con más sobrante en zona"
-              rows={selectedZonaStats.sobrantes}
-              detailsByCategory={selectedZonaStats.detallesSobrantes}
-              emptyMessage="Sin categorías sobrantes para esta zona."
-              type="sobrante"
-            />
-          </div>
-        </div>
         )}
-
-        <div className="mt-8 text-xs text-gray-500 flex items-center gap-2">
-          <FiCheckCircle className="w-4 h-4 text-gray-400" />
-          El ranking se calcula por diferencia neta entre existencias físicas y de sistema, agrupado por categoría.
-        </div>
       </div>
     </div>
   )
