@@ -87,7 +87,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       return authData.user_info;
     } catch (error: any) {
-      throw new Error(error.response?.data?.detail || 'Error al iniciar sesión');
+      // Mejora mensaje para errores de red / certificado
+      const networkMessage = 'Error de red al contactar el servidor. Verifica la URL de la API y el certificado TLS (ERR_CERT_AUTHORITY_INVALID) en la consola del navegador.'
+      const detail = error?.response?.data?.detail
+      if (!detail && (error?.message === 'Network Error' || /CERT/.test(String(error)))) {
+        throw new Error(networkMessage)
+      }
+
+      throw new Error(detail || error.message || 'Error al iniciar sesión');
     }
   };
 
