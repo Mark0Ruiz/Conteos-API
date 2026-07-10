@@ -31,5 +31,6 @@ Dockerfile
 startup.txt
 railway.toml
 Procfile
+# package.json raíz (solo Tailwind local, no necesario en el backend)
 package.json
 package-lock.json
