@@ -1,4 +1,5 @@
 # Directorios que no deben subirse al proyecto backend de Vercel
+conteos-frontend/
 conteos-frontend-temp/
 .venv/
 node_modules/
