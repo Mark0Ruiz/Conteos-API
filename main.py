@@ -1,4 +1,5 @@
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import conteos, auth, catalogo
@@ -8,26 +9,31 @@ from app.models import models
 
 logging.basicConfig(level=settings.LOG_LEVEL.upper())
 
-# Crear las tablas si no existen (no bloquear el arranque si la DB no está disponible)
-try:
-    models.Base.metadata.create_all(bind=engine)
-except Exception as e:
-    print(f"[WARNING] No se pudieron crear las tablas: {e}")
+# Nota: evitar inicializar o ejecutar migraciones automáticamente cuando
+# el código se ejecuta en el entorno serverless de Vercel. Vercel exporta la
+# variable de entorno `VERCEL=1` en su runtime. Solo ejecutar creación/migración
+# cuando no estemos en Vercel (p. ej. en desarrollo local o deployment manual).
+if not os.getenv("VERCEL"):
+    # Crear las tablas si no existen (no bloquear el arranque si la DB no está disponible)
+    try:
+        models.Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"[WARNING] No se pudieron crear las tablas: {e}")
 
-# Migración: agregar columna FechaHora si no existe
-try:
-    from sqlalchemy import text
-    with engine.connect() as _conn:
-        _res = _conn.execute(text(
-            "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
-            "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'conteo' AND COLUMN_NAME = 'FechaHora'"
-        ))
-        if _res.scalar() == 0:
-            _conn.execute(text("ALTER TABLE conteo ADD COLUMN FechaHora DATETIME NULL"))
-            _conn.commit()
-            print("[INFO] Columna FechaHora agregada a la tabla conteo")
-except Exception as _e:
-    print(f"[WARNING] No se pudo ejecutar migración FechaHora: {_e}")
+    # Migración: agregar columna FechaHora si no existe
+    try:
+        from sqlalchemy import text
+        with engine.connect() as _conn:
+            _res = _conn.execute(text(
+                "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS "
+                "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'conteo' AND COLUMN_NAME = 'FechaHora'"
+            ))
+            if _res.scalar() == 0:
+                _conn.execute(text("ALTER TABLE conteo ADD COLUMN FechaHora DATETIME NULL"))
+                _conn.commit()
+                print("[INFO] Columna FechaHora agregada a la tabla conteo")
+    except Exception as _e:
+        print(f"[WARNING] No se pudo ejecutar migración FechaHora: {_e}")
 
 app = FastAPI(
     title="API Conteos SCISP",
